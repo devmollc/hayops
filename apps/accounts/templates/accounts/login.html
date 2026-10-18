@@ -1,0 +1,40 @@
+{% extends "accounts/base_auth.html" %}
+
+{% block title %}Sign in — HayOps{% endblock %}
+
+{% block auth_content %}
+<h1 class="auth-heading">Welcome back</h1>
+<p class="auth-subheading">Sign in to your account to continue.</p>
+
+{% if form.errors %}
+<div class="auth-error">
+    Invalid email or password. Please try again.
+</div>
+{% endif %}
+
+<form method="post">
+    {% csrf_token %}
+    <div class="auth-field">
+        <label for="id_username" class="auth-label">Email</label>
+        {{ form.username }}
+    </div>
+
+    <div class="auth-field">
+        <label for="id_password" class="auth-label">Password</label>
+        {{ form.password }}
+        <div class="auth-field-footer">
+            <a href="{% url 'accounts:password_reset' %}" class="auth-link" style="font-size:0.8125rem">Forgot password?</a>
+        </div>
+    </div>
+
+    <button type="submit" class="auth-btn auth-btn-primary">Sign in</button>
+
+    {% if next %}
+    <input type="hidden" name="next" value="{{ next }}">
+    {% endif %}
+</form>
+
+<div class="auth-footer">
+    Customer looking for your tickets? <a href="{{ portal_login_url }}">Sign in here</a>
+</div>
+{% endblock %}

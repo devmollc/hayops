@@ -1,0 +1,242 @@
+{% load core_tags %}
+
+<div class="space-y-4">
+    <!-- Status -->
+    <div class="card p-4">
+        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-2">Status</h3>
+        {% if user.is_staff %}
+        <form hx-post="{% url 'tickets:change_status' ticket.pk %}" hx-target="#ticket-sidebar" hx-swap="innerHTML">
+            {% csrf_token %}
+            <select name="status" class="form-input" data-submit="request">
+                {% for value, label in ticket.Status.choices %}
+                <option value="{{ value }}" {% if ticket.status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </form>
+        {% else %}
+        <p class="text-sm text-gray-700">{{ ticket.get_status_display }}</p>
+        {% endif %}
+    </div>
+
+    <!-- Application -->
+    <div class="card p-4">
+        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-2">Application</h3>
+        {% if user.is_staff %}
+        <form hx-post="{% url 'tickets:change_source_application' ticket.pk %}" hx-target="#ticket-sidebar" hx-swap="innerHTML">
+            {% csrf_token %}
+            <select name="source_application" class="form-input" data-submit="request">
+                <option value="">None</option>
+                {% get_source_applications as apps %}
+                {% for app in apps %}
+                <option value="{{ app.pk }}" {% if ticket.source_application_id == app.pk %}selected{% endif %}>{{ app.name }}</option>
+                {% endfor %}
+            </select>
+        </form>
+        {% else %}
+        <p class="text-sm text-gray-700">{{ ticket.source_application.name|default:"None" }}</p>
+        {% endif %}
+    </div>
+
+    <!-- Priority -->
+    <div class="card p-4">
+        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-2">Priority</h3>
+        {% if user.is_staff %}
+        <form hx-post="{% url 'tickets:change_priority' ticket.pk %}" hx-target="#ticket-sidebar" hx-swap="innerHTML">
+            {% csrf_token %}
+            <select name="priority" class="form-input" data-submit="request">
+                {% for value, label in ticket.Priority.choices %}
+                <option value="{{ value }}" {% if ticket.priority == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </form>
+        {% else %}
+        <p class="text-sm text-gray-700">{{ ticket.get_priority_display }}</p>
+        {% endif %}
+    </div>
+
+    <!-- Assigned To -->
+    {% if user.is_staff %}
+    <div class="card p-4">
+        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-2">Assigned To</h3>
+        <form hx-post="{% url 'tickets:assign' ticket.pk %}" hx-target="#ticket-sidebar" hx-swap="innerHTML">
+            {% csrf_token %}
+            <select name="assigned_to" class="form-input" data-submit="request">
+                <option value="">Unassigned</option>
+                {% for agent in agents %}
+                <option value="{{ agent.pk }}" {% if ticket.assigned_to_id == agent.pk %}selected{% endif %}>{{ agent.email }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- Queue -->
+    <div class="card p-4">
+        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-2">Queue</h3>
+        <p class="text-sm text-gray-700">{{ ticket.queue.name|default:"None" }}</p>
+    </div>
+
+    <!-- SLA -->
+    {% if ticket.first_response_due_at or ticket.resolution_due_at %}
+    <div class="card p-4">
+        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-2">SLA</h3>
+        {% if ticket.first_response_due_at %}
+        <div class="text-sm mb-2">
+            <span class="text-gray-600">First Response:</span>
+            {% if ticket.first_responded_at %}
+            <span class="text-green-600">Responded {{ ticket.first_responded_at|timesince }} ago</span>
+            {% else %}
+            <span class="{% if ticket.first_response_due_at < now %}text-red-600 font-bold{% else %}text-gray-700{% endif %}">
+                Due {{ ticket.first_response_due_at|timesince }} ago
+            </span>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% if ticket.resolution_due_at %}
+        <div class="text-sm">
+            <span class="text-gray-600">Resolution:</span>
+            {% if ticket.resolved_at %}
+            <span class="text-green-600">Resolved {{ ticket.resolved_at|timesince }} ago</span>
+            {% else %}
+            <span class="{% if ticket.resolution_due_at < now %}text-red-600 font-bold{% else %}text-gray-700{% endif %}">
+                Due {{ ticket.resolution_due_at|timesince }}
+            </span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Participants -->
+    <div class="card p-4">
+        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-2">Participants</h3>
+        <ul class="space-y-1">
+            {% for p in participants %}
+            <li class="text-sm text-gray-700">
+                {{ p.email }}
+                <span class="text-xs text-gray-400">({{ p.get_role_display }})</span>
+                {% if p.is_bouncing %}
+                <span class="inline-block px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700"
+                      title="Mail to this address is being rejected. Replies will not reach them.">Bouncing</span>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- CSAT -->
+    {% if ticket.csat_rating %}
+    <div class="card p-4">
+        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-2">Customer Satisfaction</h3>
+        <div class="flex items-center">
+            {% for i in "12345" %}
+            <span class="text-lg {% if forloop.counter <= ticket.csat_rating.rating %}text-yellow-400{% else %}text-gray-300{% endif %}">&#9733;</span>
+            {% endfor %}
+            <span class="ml-2 text-sm text-gray-600">{{ ticket.csat_rating.rating }}/5</span>
+        </div>
+        {% if ticket.csat_rating.comment %}
+        <p class="text-sm text-gray-600 mt-1">{{ ticket.csat_rating.comment }}</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Resend Access Link (staff only) -->
+    {% if user.is_staff and ticket.submitter %}
+    <div class="card p-4">
+        <form method="post" action="{% url 'tickets:resend_magic_link' ticket.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-secondary btn-sm w-full">Resend Access Link</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- Context (widget-submitted browser metadata) -->
+    {% if ticket.custom_fields %}
+    <div class="card p-4">
+        <h3 class="text-sm font-semibold text-gray-500 uppercase mb-2">Context</h3>
+        <dl class="space-y-1 text-sm">
+            {% if ticket.custom_fields.page_url %}
+            {% with url=ticket.custom_fields.page_url %}
+            <div class="flex justify-between">
+                <dt class="text-gray-500">Page</dt>
+                <dd class="text-blue-600 truncate max-w-[65%]">
+                    {% if url|slice:":7"|lower == "http://" or url|slice:":8"|lower == "https://" %}
+                    <a href="{{ url }}" target="_blank" rel="noopener noreferrer" title="{{ url }}">
+                        {{ url|truncatechars:40 }}
+                    </a>
+                    {% else %}
+                    <span title="{{ url }}">{{ url|truncatechars:40 }}</span>
+                    {% endif %}
+                </dd>
+            </div>
+            {% endwith %}
+            {% endif %}
+            {% if ticket.custom_fields.user_agent %}
+            <div class="flex justify-between">
+                <dt class="text-gray-500">User Agent</dt>
+                <dd class="text-gray-700 truncate max-w-[65%]" title="{{ ticket.custom_fields.user_agent }}">
+                    {{ ticket.custom_fields.user_agent|truncatechars:40 }}
+                </dd>
+            </div>
+            {% endif %}
+            {% with wc=ticket.custom_fields.widget_context %}
+            {% if wc %}
+            {% if wc.viewport %}
+            <div class="flex justify-between">
+                <dt class="text-gray-500">Viewport</dt>
+                <dd class="text-gray-700">{{ wc.viewport }}</dd>
+            </div>
+            {% endif %}
+            {% if wc.screen %}
+            <div class="flex justify-between">
+                <dt class="text-gray-500">Screen</dt>
+                <dd class="text-gray-700">{{ wc.screen }}</dd>
+            </div>
+            {% endif %}
+            {% if wc.timezone %}
+            <div class="flex justify-between">
+                <dt class="text-gray-500">Timezone</dt>
+                <dd class="text-gray-700">{{ wc.timezone }}</dd>
+            </div>
+            {% endif %}
+            {% if wc.referrer %}
+            <div class="flex justify-between">
+                <dt class="text-gray-500">Referrer</dt>
+                <dd class="text-gray-700 truncate max-w-[65%]" title="{{ wc.referrer }}">{{ wc.referrer|truncatechars:40 }}</dd>
+            </div>
+            {% endif %}
+            {% if wc.platform %}
+            <div class="flex justify-between">
+                <dt class="text-gray-500">Platform</dt>
+                <dd class="text-gray-700">{{ wc.platform }}</dd>
+            </div>
+            {% endif %}
+            {% endif %}
+            {% if wc.console_errors %}
+            <details class="mt-2">
+                <summary class="text-gray-500 cursor-pointer">Console Errors ({{ wc.console_errors|length }})</summary>
+                <ul class="mt-1 space-y-1 text-xs text-red-600 font-mono">
+                    {% for err in wc.console_errors %}
+                    <li>{{ err }}</li>
+                    {% endfor %}
+                </ul>
+            </details>
+            {% endif %}
+            {% if wc.app_context %}
+            <details class="mt-2">
+                <summary class="text-gray-500 cursor-pointer">App Context</summary>
+                <dl class="mt-1 space-y-1 text-xs">
+                    {% for key, value in wc.app_context.items %}
+                    <div class="flex justify-between">
+                        <dt class="text-gray-500">{{ key }}</dt>
+                        <dd class="text-gray-700">{{ value }}</dd>
+                    </div>
+                    {% endfor %}
+                </dl>
+            </details>
+            {% endif %}
+            {% endwith %}
+        </dl>
+    </div>
+    {% endif %}
+</div>

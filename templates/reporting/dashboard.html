@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Reports — HayOps{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-900">Reports Dashboard</h1>
+        <form method="get" class="flex items-center gap-3">
+            <input type="date" name="date_from" value="{{ date_from }}" class="rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <span class="text-gray-500 text-sm">to</span>
+            <input type="date" name="date_to" value="{{ date_to }}" class="rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <button type="submit" class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                Apply
+            </button>
+        </form>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <a href="{% url 'tickets:queue' %}" class="block bg-white rounded-lg border border-gray-200 p-5 hover:border-blue-400">
+            <p class="text-sm font-medium text-gray-500">Unclosed Tickets</p>
+            <p class="mt-1 text-3xl font-semibold text-gray-900">{{ unclosed_count }}</p>
+            <p class="text-xs text-gray-400 mt-1">Right now</p>
+        </a>
+        <a href="{% url 'tickets:queue' %}?assigned_to=unassigned" class="block bg-white rounded-lg border border-gray-200 p-5 hover:border-blue-400">
+            <p class="text-sm font-medium text-gray-500">Unclaimed</p>
+            <p class="mt-1 text-3xl font-semibold {% if unclaimed_count %}text-orange-600{% else %}text-gray-900{% endif %}">{{ unclaimed_count }}</p>
+            <p class="text-xs text-gray-400 mt-1">Nobody assigned</p>
+        </a>
+        <div class="bg-white rounded-lg border border-gray-200 p-5">
+            <p class="text-sm font-medium text-gray-500">Avg Response Time</p>
+            <p class="mt-1 text-3xl font-semibold text-gray-900">
+                {% if avg_response %}{{ avg_response.display }}{% else %}—{% endif %}
+            </p>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-200 p-5">
+            <p class="text-sm font-medium text-gray-500">SLA Compliance</p>
+            <p class="mt-1 text-3xl font-semibold text-gray-900">
+                {% if sla_rate is not None %}{{ sla_rate }}%{% else %}—{% endif %}
+            </p>
+        </div>
+        <div class="bg-white rounded-lg border border-gray-200 p-5">
+            <p class="text-sm font-medium text-gray-500">Avg CSAT</p>
+            <p class="mt-1 text-3xl font-semibold text-gray-900">
+                {% if csat_overall.overall_avg %}{{ csat_overall.overall_avg }}/5{% else %}—{% endif %}
+            </p>
+            {% if csat_overall.overall_count %}
+            <p class="text-xs text-gray-400 mt-1">{{ csat_overall.overall_count }} rating{{ csat_overall.overall_count|pluralize }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <p class="text-xs text-gray-500">
+        Trends cover {{ date_from }} to {{ date_to }}. Unclosed, unclaimed and per-agent counts are current, not limited to that range.
+    </p>
+
+    <!-- Charts Row 1 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Ticket Volume -->
+        <div class="bg-white rounded-lg border border-gray-200 p-5">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Ticket Volume</h2>
+            <div class="relative h-64"><canvas id="volumeChart"></canvas></div>
+        </div>
+
+        <!-- Agent Workload -->
+        <div class="bg-white rounded-lg border border-gray-200 p-5">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Tickets by Agent</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-xs uppercase tracking-wide text-gray-500 border-b border-gray-200">
+                            <th class="py-2 font-medium">Agent</th>
+                            <th class="py-2 font-medium text-right">Unclosed</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for row in workload %}
+                        <tr>
+                            <td class="py-2">
+                                <a href="{% url 'tickets:queue' %}?assigned_to={{ row.assigned_to_id }}" class="text-blue-600 hover:underline">{{ row.assigned_to__email }}</a>
+                            </td>
+                            <td class="py-2 text-right font-medium text-gray-900">{{ row.count }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="2" class="py-3 text-gray-500">No tickets assigned to anyone.</td></tr>
+                        {% endfor %}
+                        <tr class="bg-gray-50">
+                            <td class="py-2">
+                                <a href="{% url 'tickets:queue' %}?assigned_to=unassigned" class="text-orange-600 hover:underline">Unclaimed</a>
+                            </td>
+                            <td class="py-2 text-right font-medium text-gray-900">{{ unclaimed_count }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Source Breakdown -->
+        <div class="bg-white rounded-lg border border-gray-200 p-5">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">Source Breakdown</h2>
+            <div class="relative h-64"><canvas id="sourceChart"></canvas></div>
+        </div>
+
+        <!-- CSAT Trend -->
+        <div class="bg-white rounded-lg border border-gray-200 p-5">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">CSAT Trend</h2>
+            <div class="relative h-64"><canvas id="csatChart"></canvas></div>
+        </div>
+    </div>
+</div>
+
+{{ volume_data|json_script:"volume-data" }}
+{{ source_data|json_script:"source-data" }}
+{{ csat_data|json_script:"csat-data" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{% static 'js/reports.js' %}" defer></script>
+{% endblock %}

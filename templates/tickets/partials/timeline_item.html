@@ -1,0 +1,71 @@
+{% load core_tags %}
+
+{% if item.comment_type is not None %}
+{# This is a Comment — hide internal notes from non-staff #}
+{% if item.comment_type == 'internal' and not user.is_staff %}
+{% else %}
+<div class="card p-4 {% if item.comment_type == 'internal' %}bg-yellow-50 border-yellow-200{% endif %}">
+    <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium text-gray-900">
+                {{ item.author.email|default:item.author_email }}
+            </span>
+            {% if item.comment_type == "internal" %}
+            <span class="badge bg-yellow-100 text-yellow-800">Internal Note</span>
+            {% endif %}
+            {% if item.is_first_response %}
+            <span class="badge bg-green-100 text-green-800">First Response</span>
+            {% endif %}
+        </div>
+        <span class="text-xs text-gray-500">{{ item.created_at|timesince }} ago</span>
+    </div>
+    <div class="prose prose-sm max-w-none text-gray-700">
+        {{ item.body|urlize|linebreaks }}
+    </div>
+    {% if item.attachments.exists %}
+    <div class="mt-3 space-y-1">
+        {% for attachment in item.attachments.all %}
+        <a href="{{ attachment.file.url }}" class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+            </svg>
+            {{ attachment.filename }} ({{ attachment.size_bytes|filesizeformat }})
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+{% else %}
+{# This is a TicketEvent #}
+<div class="flex items-center space-x-3 py-2 px-4 text-sm text-gray-500">
+    <div class="w-2 h-2 bg-gray-300 rounded-full flex-shrink-0"></div>
+    <span>
+        {% if item.actor %}{{ item.actor.email }}{% else %}System{% endif %}
+        {% if item.event_type == "status_changed" %}
+        changed status from <strong>{{ item.old_value.status }}</strong> to <strong>{{ item.new_value.status }}</strong>
+        {% elif item.event_type == "assigned" %}
+        assigned to <strong>{{ item.new_value.assigned_to|default:"unassigned" }}</strong>
+        {% elif item.event_type == "priority_changed" %}
+        changed priority from <strong>{{ item.old_value.priority }}</strong> to <strong>{{ item.new_value.priority }}</strong>
+        {% elif item.event_type == "merged" %}
+        {% if item.new_value.merged_into %}
+        merged into <strong>{{ item.new_value.merged_into }}</strong>
+        {% else %}
+        merged from <strong>{{ item.new_value.merged_from }}</strong>
+        {% endif %}
+        {% elif item.event_type == "tag_added" %}
+        added tag <strong>{{ item.new_value.tag }}</strong>
+        {% elif item.event_type == "tag_removed" %}
+        removed tag <strong>{{ item.old_value.tag }}</strong>
+        {% elif item.event_type == "sla_breached" %}
+        <span class="text-red-600 font-medium">SLA breached</span>
+        {% elif item.event_type == "created" %}
+        created this ticket
+        {% else %}
+        {{ item.get_event_type_display|lower }}
+        {% endif %}
+    </span>
+    <span class="text-xs text-gray-400">{{ item.created_at|timesince }} ago</span>
+</div>
+{% endif %}

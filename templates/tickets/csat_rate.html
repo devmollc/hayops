@@ -1,0 +1,76 @@
+{% extends base_template|default:"base.html" %}
+
+{% block title %}Rate Your Experience — HayOps{% endblock %}
+
+{% block content %}
+<div class="min-h-[60vh] flex items-center justify-center">
+    <div class="w-full max-w-md">
+        {% if error and not ticket %}
+            <div class="bg-white rounded-lg border border-gray-200 p-8 text-center">
+                <p class="text-red-600 font-medium">{{ error }}</p>
+            </div>
+        {% elif existing_rating %}
+            <div class="bg-white rounded-lg border border-gray-200 p-8 text-center space-y-4">
+                <div class="text-green-600">
+                    <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                {% if just_submitted %}
+                    <h2 class="text-xl font-semibold text-gray-900">Thank you for your feedback!</h2>
+                {% else %}
+                    <h2 class="text-xl font-semibold text-gray-900">Already Rated</h2>
+                {% endif %}
+                <p class="text-gray-600">Ticket {{ ticket.reference_number }}</p>
+                <div class="flex justify-center gap-1">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= existing_rating.rating %}
+                            <svg class="h-8 w-8 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        {% else %}
+                            <svg class="h-8 w-8 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% if existing_rating.comment %}
+                    <p class="text-sm text-gray-500 italic">"{{ existing_rating.comment }}"</p>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="bg-white rounded-lg border border-gray-200 p-8 space-y-6">
+                <div class="text-center">
+                    <h2 class="text-xl font-semibold text-gray-900">How was your experience?</h2>
+                    <p class="text-gray-500 mt-1">Ticket {{ ticket.reference_number }}: {{ ticket.subject }}</p>
+                </div>
+
+                {% if error %}
+                    <div class="rounded-md bg-red-50 p-3 text-sm text-red-800">{{ error }}</div>
+                {% endif %}
+
+                <form method="post" x-data="{ rating: 0 }">
+                    {% csrf_token %}
+                    <input type="hidden" name="rating" x-bind:value="rating">
+
+                    <div class="flex justify-center gap-2 mb-6">
+                        <template x-for="star in [1, 2, 3, 4, 5]" :key="star">
+                            <button type="button" @click="rating = star" class="focus:outline-none transition-transform hover:scale-110">
+                                <svg class="h-10 w-10 cursor-pointer" :class="star <= rating ? 'text-yellow-400' : 'text-gray-300'" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                </svg>
+                            </button>
+                        </template>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="comment" class="block text-sm font-medium text-gray-700 mb-1">Comments (optional)</label>
+                        <textarea id="comment" name="comment" rows="3" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" placeholder="Tell us about your experience..."></textarea>
+                    </div>
+
+                    <button type="submit" x-bind:disabled="rating === 0" class="w-full rounded-md bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Submit Rating
+                    </button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "portal/base.html" %}
+
+{% block title %}Contact Support{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+    <h1 class="text-2xl font-bold text-gray-900 mb-2">Contact Support</h1>
+    <p class="text-gray-600 mb-6">Tell us what's going on and we'll get back to you by email.</p>
+
+    <form method="post" enctype="multipart/form-data" class="card p-6 space-y-4">
+        {% csrf_token %}
+
+        <div style="position:absolute; left:-9999px;" aria-hidden="true">
+            <label for="id_website">Website</label>
+            {{ form.website }}
+        </div>
+
+        <div>
+            <label for="id_name" class="form-label">Name (optional)</label>
+            <input type="text" name="name" id="id_name" class="form-input" value="{{ form.name.value|default:'' }}">
+        </div>
+
+        <div>
+            <label for="id_email" class="form-label">Email</label>
+            <input type="email" name="email" id="id_email" class="form-input" value="{{ form.email.value|default:'' }}" required>
+            {% if form.email.errors %}<p class="text-sm text-red-600 mt-1">{{ form.email.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+            <label for="id_subject" class="form-label">Subject</label>
+            <input type="text" name="subject" id="id_subject" class="form-input" value="{{ form.subject.value|default:'' }}" required>
+            {% if form.subject.errors %}<p class="text-sm text-red-600 mt-1">{{ form.subject.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+            <label for="id_body" class="form-label">How can we help?</label>
+            <textarea name="body" id="id_body" rows="6" class="form-input" required>{{ form.body.value|default:"" }}</textarea>
+            {% if form.body.errors %}<p class="text-sm text-red-600 mt-1">{{ form.body.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+            <label for="id_attachments" class="form-label">Attachments (optional)</label>
+            <input type="file" name="attachments" id="id_attachments" multiple
+                   class="form-input file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-gray-100 file:text-gray-700">
+            <p class="text-xs text-gray-500 mt-1">Screenshots or files that help explain the problem. Up to 5 files, 10&nbsp;MB each.</p>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-full">Send</button>
+    </form>
+</div>
+{% endblock %}

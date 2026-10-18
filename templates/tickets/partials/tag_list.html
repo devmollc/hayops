@@ -1,0 +1,23 @@
+<div class="flex flex-wrap items-center gap-2" x-data="{ showAdd: false }">
+    {% for tag in ticket.tags.all %}
+    <span class="inline-flex items-center badge" style="background-color: {{ tag.color }}20; color: {{ tag.color }};">
+        {{ tag.name }}
+        <button hx-post="{% url 'tickets:remove_tag' ticket.pk tag.pk %}"
+                hx-target="#tag-section"
+                hx-swap="innerHTML"
+                class="ml-1 hover:text-red-600">&times;</button>
+    </span>
+    {% endfor %}
+
+    <button @click="showAdd = !showAdd" class="text-sm text-blue-600 hover:text-blue-800">+ Add Tag</button>
+
+    <form x-show="showAdd" hx-post="{% url 'tickets:add_tag' ticket.pk %}" hx-target="#tag-section" hx-swap="innerHTML" class="inline-flex items-center space-x-2">
+        {% csrf_token %}
+        <select name="tag_id" class="form-input text-sm py-1">
+            {% for tag in tags %}
+            <option value="{{ tag.pk }}">{{ tag.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-sm btn-secondary">Add</button>
+    </form>
+</div>

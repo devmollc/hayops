@@ -1,0 +1,7 @@
+{% extends "inbound_email/base_email.html" %}
+{% block body %}
+<p>Hello,</p>
+<p>Here is your link to sign in and see your support tickets.</p>
+<p><a href="{{ login_url }}" style="color:{{ primary_color|default:"#2563eb" }};">Sign in to your tickets</a></p>
+<p>This link works once and expires in {{ ttl_minutes }} minutes. If you didn't ask to sign in, you can ignore this email.</p>
+{% endblock %}

@@ -1,0 +1,4 @@
+[Staff copy] Customer replied on {{ ref }}: {{ ticket.subject }}
+
+Open in the agent queue (requires a staff sign-in):
+{{ detail_url }}

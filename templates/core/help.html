@@ -1,0 +1,401 @@
+{% extends "base.html" %}
+
+{% block title %}Help — HayOps{% endblock %}
+
+{% block content %}
+<div class="flex gap-8">
+    <aside class="hidden lg:block w-56 flex-shrink-0">
+        <nav class="sticky top-6 space-y-1 text-sm">
+            <p class="font-semibold text-gray-900 mb-2">Support team guide</p>
+            <a href="#queue" class="block px-2 py-1 text-gray-600 hover:text-blue-600">The queue</a>
+            <a href="#working" class="block px-2 py-1 text-gray-600 hover:text-blue-600">Working a ticket</a>
+            <a href="#canned" class="block px-2 py-1 text-gray-600 hover:text-blue-600">Canned responses</a>
+            <a href="#live" class="block px-2 py-1 text-gray-600 hover:text-blue-600">Live updates &amp; sound</a>
+            <a href="#channels" class="block px-2 py-1 text-gray-600 hover:text-blue-600">How tickets arrive</a>
+            <a href="#emails" class="block px-2 py-1 text-gray-600 hover:text-blue-600">What customers receive</a>
+            <a href="#context" class="block px-2 py-1 text-gray-600 hover:text-blue-600">Widget context data</a>
+            <a href="#kb" class="block px-2 py-1 text-gray-600 hover:text-blue-600">Knowledge base</a>
+            <a href="#markdown" class="block px-2 py-1 text-gray-600 hover:text-blue-600">Markdown cheatsheet</a>
+            <a href="#sla" class="block px-2 py-1 text-gray-600 hover:text-blue-600">SLA &amp; CSAT</a>
+            <a href="#testbench" class="block px-2 py-1 text-gray-600 hover:text-blue-600">QC testbench</a>
+            <a href="#mcp" class="block px-2 py-1 text-gray-600 hover:text-blue-600">Claude &amp; the MCP server</a>
+            <a href="#apps" class="block px-2 py-1 text-gray-600 hover:text-blue-600">Adding an application</a>
+        </nav>
+    </aside>
+
+    <article class="min-w-0 flex-1 max-w-3xl space-y-10">
+        <header>
+            <h1 class="text-2xl font-bold text-gray-900">Support team guide</h1>
+            <p class="mt-2 text-gray-600">How this helpdesk works, end to end. All applications
+            share this one dashboard —
+            the <span class="font-medium">Application</span> column and filter tell them apart.</p>
+        </header>
+
+        <section id="queue">
+            <h2 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-1">The queue</h2>
+            <ul class="mt-3 space-y-2 text-sm text-gray-700 list-disc pl-5">
+                <li>Every ticket from every application lands in the single <a href="{% url 'tickets:queue' %}" class="text-blue-600 hover:underline">Tickets</a> queue.</li>
+                <li>Filter by status, priority, queue, application, or assignee; free-text search covers subject and reference number.</li>
+                <li>Save any filter combination as a <span class="font-medium">saved view</span> (personal or shared with the team).</li>
+                <li>New tickets start as <span class="font-medium">new</span>; they flip to <span class="font-medium">open</span> automatically when claimed, assigned, or first replied to by staff.</li>
+            </ul>
+        </section>
+
+        <section id="working">
+            <h2 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-1">Working a ticket</h2>
+            <ul class="mt-3 space-y-2 text-sm text-gray-700 list-disc pl-5">
+                <li><span class="font-medium">Claim</span> takes an unassigned ticket (safe under two agents clicking at once); or assign explicitly from the sidebar.</li>
+                <li><span class="font-medium">Public reply</span> is emailed to the customer. <span class="font-medium">Internal note</span> is never visible outside the team.</li>
+                <li>The reply box and the <a href="{% url 'tickets:create' %}" class="text-blue-600 hover:underline">create-ticket</a> form both have <span class="font-medium">Insert canned response</span> and <span class="font-medium">Insert KB article</span> — see <a href="#canned" class="text-blue-600 hover:underline">below</a>.</li>
+                <li>Statuses: new → open → pending (waiting on customer) → resolved → closed. Resolving sends the customer a CSAT survey; other status changes send a status-update email.</li>
+                <li><span class="font-medium">Merge</span> moves comments, attachments, and participants into the target ticket and marks the source as merged.</li>
+                <li>A banner warns you when another agent has the same ticket open.</li>
+                <li>If a customer lost their ticket link, use <span class="font-medium">Resend access link</span> on the ticket — it re-sends the confirmation email with a fresh magic link.</li>
+            </ul>
+        </section>
+
+        <section id="canned">
+            <h2 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-1">Canned responses &amp; KB links</h2>
+            <p class="mt-3 text-sm text-gray-700">A canned response is a saved block of text you drop into a
+            reply instead of retyping it. Both pickers sit above the send button on the reply box, and on the
+            <a href="{% url 'tickets:create' %}" class="text-blue-600 hover:underline">create-ticket</a> form when you
+            raise a ticket on a customer's behalf.</p>
+
+            <h3 class="mt-5 text-sm font-semibold text-gray-900">Using one</h3>
+            <ul class="mt-2 space-y-2 text-sm text-gray-700 list-disc pl-5">
+                <li>Click <span class="font-medium">Insert canned response</span>, type to search — it matches the title and the shortcut — then hit <span class="font-medium">Insert</span>.</li>
+                <li>The text is <span class="font-medium">appended</span> to whatever you have already written, so you can stack a greeting and an answer, and half-finished replies are never wiped.</li>
+                <li><span class="font-medium">Insert KB article</span> works the same way and drops in the article's title and link. Comments are sent as plain text, so paste-in links stay clickable in the customer's mail client.</li>
+                <li>Edit after inserting. Canned text is a starting point, not the whole reply.</li>
+            </ul>
+
+            <h3 class="mt-5 text-sm font-semibold text-gray-900">Adding a new one</h3>
+            <ol class="mt-2 space-y-2 text-sm text-gray-700 list-decimal pl-5">
+                <li>Open <a href="{% url 'tickets:canned_list' %}" class="text-blue-600 hover:underline">Canned Responses</a> in the top menu and click <span class="font-medium">New Response</span>. You do not need an admin account — any staff user can add, edit or delete one, and they are shared with the whole team.</li>
+                <li><span class="font-medium">Title</span> — what you will search for. Keep it descriptive: <em>Refund approved — processing times</em> beats <em>Refund</em>.</li>
+                <li><span class="font-medium">Body</span> — the text itself, sent verbatim. There is no templating, so leave a blank to fill in (<code class="bg-gray-100 px-1 rounded">Hi ____,</code>) rather than guessing a name.</li>
+                <li><span class="font-medium">Queue</span> — leave blank to offer it on every ticket. Pick a queue and it appears <em>only</em> on tickets in that queue.</li>
+                <li><span class="font-medium">Shortcut</span> — optional short alias, searched alongside the title. Handy for the ones you use daily.</li>
+                <li>Save. The response is searchable from every reply box straight away.</li>
+            </ol>
+
+            <div class="mt-4 rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
+                <p class="font-medium">A queued response is invisible everywhere else — including the create-ticket form.</p>
+                <p class="mt-1">That form has no queue chosen at the moment it loads, so only responses left on
+                <span class="font-medium">All queues</span> appear there. If you write a response you want reachable
+                from anywhere, leave the queue blank.</p>
+            </div>
+
+            <p class="mt-4 text-sm text-gray-700">The <a href="{% url 'tickets:canned_list' %}" class="text-blue-600 hover:underline">Canned Responses</a>
+            page lists every response with its usage count, highest first — the quickest way to see which ones are
+            earning their keep and which are dead weight. Edit and delete live there too.</p>
+        </section>
+
+        <section id="live">
+            <h2 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-1">Live updates &amp; sound alerts</h2>
+            <ul class="mt-3 space-y-2 text-sm text-gray-700 list-disc pl-5">
+                <li>The queue and open ticket timelines refresh themselves every ~10 seconds — no reload needed.</li>
+                <li>The tab plays a short beep when a new ticket or a customer reply arrives anywhere in the system.</li>
+                <li>Mute/unmute with the 🔔 button in the nav; the setting sticks per browser. Browsers require one click anywhere on the page after loading before they allow sound.</li>
+            </ul>
+        </section>
+
+        <section id="channels">
+            <h2 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-1">How tickets arrive</h2>
+            <ul class="mt-3 space-y-2 text-sm text-gray-700 list-disc pl-5">
+                <li><span class="font-medium">Email</span> — customers write to any address at an app's mail domain (e.g. <code class="bg-gray-100 px-1 rounded">support@mail.example.com</code>). The domain decides which application the ticket belongs to. Replies thread back via the <code class="bg-gray-100 px-1 rounded">[HD-xxxx]</code> subject tag; senders unknown to a ticket get a fresh ticket instead (guards against ref guessing). Spam/virus-flagged mail is quarantined and never becomes a ticket.</li>
+                <li><span class="font-medium">Widget</span> — the in-app panel in each product. Users can browse their tickets, create, and reply. Submissions carry rich debugging context (see below).</li>
+                <li><span class="font-medium">Portal</span> — each app's public support site (e.g. <code class="bg-gray-100 px-1 rounded">support.example.com</code>) has a submit form, the app's KB articles, and the customer's magic-link ticket view with a reply box.</li>
+            </ul>
+
+            <h3 class="mt-5 text-sm font-semibold text-gray-900">Inbound addresses and portals by application</h3>
+            <p class="mt-1 text-sm text-gray-700">Routing is by <span class="font-medium">domain</span>, not mailbox.
+            The addresses below are the ones we publish — they are <em>not</em> an allowlist. <em>Any</em> local part at
+            these domains reaches the same application, so a customer writing to
+            <code class="bg-gray-100 px-1 rounded">info@</code> or <code class="bg-gray-100 px-1 rounded">sales@</code>
+            is handled exactly the same way. Queues have no address of their own; mail picks the application, and the
+            queue is set in the helpdesk afterwards.</p>
+            <div class="mt-3 overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead>
+                        <tr class="text-left text-xs uppercase tracking-wide text-gray-500 border-b border-gray-200">
+                            <th class="py-2 pr-4 font-medium align-bottom">Application</th>
+                            <th class="py-2 pr-4 font-medium align-bottom">Give customers these addresses</th>
+                            <th class="py-2 font-medium align-bottom">Portal</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for app in mail_apps %}
+                        <tr class="align-top">
+                            <td class="py-2 pr-4 text-gray-900 whitespace-nowrap">{{ app.branding_name }}</td>
+                            <td class="py-2 pr-4">
+                                {% if app.mail_domain %}
+                                <div class="flex flex-wrap gap-x-2 gap-y-1">
+                                    {% for alias in inbound_aliases %}
+                                    <a href="mailto:{{ alias }}@{{ app.mail_domain }}"
+                                       class="bg-gray-100 px-1 rounded font-mono text-xs text-gray-800 hover:text-blue-700">{{ alias }}@{{ app.mail_domain }}</a>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <span class="text-amber-700">No mail domain set — email to this app can't be routed.</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-2 whitespace-nowrap">
+                                {% if app.portal_domain %}
+                                <a href="https://{{ app.portal_domain }}/" target="_blank" rel="noopener"
+                                   class="text-blue-600 hover:text-blue-800">https://{{ app.portal_domain }}/</a>
+                                {% else %}
+                                <span class="text-gray-400">&mdash;</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="py-2 text-gray-500">No active applications configured.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4 rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
+                <p class="font-medium">Mail to any other address still becomes a ticket — just an unassociated one.</p>
+                <p class="mt-1">If the recipient domain is not one of the above, the ticket is created with
+                <span class="font-medium">no application set</span>. That means: no branding on the acknowledgement,
+                no SLA policy scoped to an app, and the customer will not see it on any portal or in their ticket list
+                — the magic link in their email is their only way back to it. The same applies to
+                <code class="bg-amber-100 px-1 rounded">{{ default_email_domain }}</code>, which is the staff/admin
+                domain, not a customer intake address.</p>
+                <p class="mt-1">If you spot an unassociated ticket, set its application from the ticket page — that
+                restores branding and portal visibility for the customer. If a whole domain is landing unassociated,
+                its app is missing a <span class="font-medium">mail domain</span> in the admin.</p>
+            </div>
+        </section>
+
+        <section id="emails">
+            <h2 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-1">What customers (and you) receive</h2>
+            <ul class="mt-3 space-y-2 text-sm text-gray-700 list-disc pl-5">
+                <li>On creation: a branded acknowledgment carrying their <span class="font-medium">magic link</span> (30-day, read + reply access, no account needed).</li>
+                <li>On your public reply: the reply, branded per application, sent from <code class="bg-gray-100 px-1 rounded">ticket+hd-xxxx@&lt;mail domain&gt;</code> so their answer threads back.</li>
+                <li>On status change: a status update; on resolve: the CSAT survey instead.</li>
+                <li>The team address receives an alert for every new ticket and every customer reply — the fallback if nobody has the dashboard open.</li>
+            </ul>
+        </section>
+
+        <section id="context">
+            <h2 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-1">Widget context data</h2>
+            <p class="mt-3 text-sm text-gray-700">Tickets created through the widget show a
+            <span class="font-medium">Context</span> section in the sidebar: the page the user was on,
+            browser and platform, viewport/screen size, timezone, referrer, recent console errors
+            captured from their session, an optional annotated screenshot (in attachments), and any
+            state the host application chose to attach. Check it before asking the customer for
+            reproduction details — the answer is often already there.</p>
+        </section>
+
+        <section id="kb">
+            <h2 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-1">Knowledge base</h2>
+            <ul class="mt-3 space-y-2 text-sm text-gray-700 list-disc pl-5">
+                <li>Articles are written once in <a href="{% url 'kb:article_list' %}" class="text-blue-600 hover:underline">Knowledge Base</a>.</li>
+                <li>Bodies are <span class="font-medium">Markdown</span> — see the <a href="#markdown" class="text-blue-600 hover:underline">cheatsheet</a>. The editor puts a live <span class="font-medium">HTML preview</span> beside the body box, rendered exactly as the portal will render it, so what you see there is what the customer gets.</li>
+                <li>An article assigned to an application appears only on that app's portal; an article with no application is global and appears on every portal.</li>
+                <li>Portals render articles under the app's own branding automatically.</li>
+                <li>Only published articles are searchable from <a href="#canned" class="text-blue-600 hover:underline">Insert KB article</a> in a reply — a draft cannot be linked to a customer.</li>
+            </ul>
+        </section>
+
+        <section id="markdown">
+            <h2 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-1">Markdown cheatsheet</h2>
+            <p class="mt-3 text-sm text-gray-700">What the knowledge base understands. The preview beside the
+            editor is the same renderer the portal uses, so anything that looks right there is right.</p>
+
+            <div class="mt-4 overflow-x-auto">
+                <table class="min-w-full text-sm text-gray-700">
+                    <thead>
+                        <tr class="border-b border-gray-200 text-left text-xs uppercase tracking-wide text-gray-500">
+                            <th class="py-2 pr-4 font-medium">You write</th>
+                            <th class="py-2 font-medium">You get</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 align-top">
+                        <tr>
+                            <td class="py-2 pr-4"><code class="bg-gray-100 px-1 rounded"># Heading</code> … <code class="bg-gray-100 px-1 rounded">###### Heading</code></td>
+                            <td class="py-2">Headings, biggest to smallest. Each gets a link anchor.</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 pr-4"><code class="bg-gray-100 px-1 rounded">**bold**</code>, <code class="bg-gray-100 px-1 rounded">*italic*</code></td>
+                            <td class="py-2"><strong>bold</strong>, <em>italic</em></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 pr-4"><code class="bg-gray-100 px-1 rounded">- item</code> or <code class="bg-gray-100 px-1 rounded">1. item</code></td>
+                            <td class="py-2">Bulleted or numbered list. Indent four spaces to nest.</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 pr-4"><code class="bg-gray-100 px-1 rounded">[text](https://example.com)</code></td>
+                            <td class="py-2">A link. A bare URL is <em>not</em> linked automatically — wrap it in angle brackets, <code class="bg-gray-100 px-1 rounded">&lt;https://example.com&gt;</code>, or use the bracket form.</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 pr-4"><code class="bg-gray-100 px-1 rounded">![alt text](https://example.com/pic.png)</code></td>
+                            <td class="py-2">An image. There is no upload — the URL has to already be somewhere public.</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 pr-4"><code class="bg-gray-100 px-1 rounded">`code`</code></td>
+                            <td class="py-2">Inline <code class="bg-gray-100 px-1 rounded">code</code>. Good for field names, filenames, error strings.</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 pr-4"><code class="bg-gray-100 px-1 rounded">```python</code> … <code class="bg-gray-100 px-1 rounded">```</code></td>
+                            <td class="py-2">A fenced code block. The language is optional and only labels the block — nothing is colour-highlighted.</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 pr-4"><code class="bg-gray-100 px-1 rounded">&gt; quoted</code></td>
+                            <td class="py-2">Blockquote.</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 pr-4"><code class="bg-gray-100 px-1 rounded">---</code></td>
+                            <td class="py-2">Horizontal rule.</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 pr-4"><code class="bg-gray-100 px-1 rounded">| a | b |</code><br><code class="bg-gray-100 px-1 rounded">|---|---|</code><br><code class="bg-gray-100 px-1 rounded">| 1 | 2 |</code></td>
+                            <td class="py-2">A table. The <code class="bg-gray-100 px-1 rounded">---</code> row is required and separates the header from the body.</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 pr-4"><code class="bg-gray-100 px-1 rounded">[TOC]</code></td>
+                            <td class="py-2">A table of contents built from the article's headings, dropped in at that spot.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="mt-5 text-sm font-semibold text-gray-900">The two that catch people out</h3>
+            <ul class="mt-2 space-y-2 text-sm text-gray-700 list-disc pl-5">
+                <li><span class="font-medium">A single newline is not a line break.</span> Two lines of text with nothing between them become one paragraph. Leave a blank line for a new paragraph, or end the line with two spaces to force a break.</li>
+                <li><span class="font-medium">Not everything from GitHub works here.</span> <code class="bg-gray-100 px-1 rounded">~~strikethrough~~</code>, <code class="bg-gray-100 px-1 rounded">- [ ]</code> task lists and footnotes render as literal text. Raw HTML, on the other hand, is passed straight through.</li>
+            </ul>
+        </section>
+
+        <section id="sla">
+            <h2 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-1">SLA &amp; CSAT</h2>
+            <ul class="mt-3 space-y-2 text-sm text-gray-700 list-disc pl-5">
+                <li>SLA policies (per queue and/or application, with priority overrides) stamp first-response and resolution due dates on new tickets; compliance shows up in <a href="{% url 'reporting:dashboard' %}" class="text-blue-600 hover:underline">Reports</a>.</li>
+                <li>CSAT surveys go out automatically when you resolve a ticket; ratings and comments feed the Reports dashboard.</li>
+            </ul>
+        </section>
+
+        <section id="testbench">
+            <h2 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-1">QC testbench</h2>
+            <p class="mt-3 text-sm text-gray-700">The <a href="{% url 'testbench:index' %}" class="text-blue-600 hover:underline">Testbench</a>
+            is the shared manual regression script for each application: areas of test cases (quoted in bug
+            reports by key, e.g. <code class="bg-gray-100 px-1 rounded">ISO-03</code>), each with its setup,
+            numbered steps and expected result. Everyone works from the same board, and every result is kept.</p>
+
+            <h3 class="mt-5 text-sm font-semibold text-gray-900">Running a test pass</h3>
+            <ol class="mt-2 space-y-2 text-sm text-gray-700 list-decimal pl-5">
+                <li>Open <span class="font-medium">Testbench</span> in the top menu and pick the application.</li>
+                <li>Click <span class="font-medium">Start new run</span> (top right) and give it a name and the build under test, e.g. <em>v1.4.0 regression</em>. Starting a run closes the previous one; its results stay in each case's history.</li>
+                <li><span class="font-medium">Claim</span> a case before you start so nobody else picks it up — your name appears on everyone's board within a few seconds. <span class="font-medium">Release</span> hands it back, and anyone can release a claim that was left behind.</li>
+                <li>Write what you saw in the notes box, then click <span class="font-medium">Pass</span>, <span class="font-medium">Fail</span> or <span class="font-medium">Blocked</span>.</li>
+                <li>Testing again after a fix? Record the case again. It adds a new entry instead of replacing the old one.</li>
+            </ol>
+            <p class="mt-3 text-sm text-gray-700">The <span class="font-medium">Show</span> filters narrow the board to cases not run, in progress, failed, release focus or P0. The <span class="font-medium">Runs</span> list opens past runs, read-only.</p>
+
+            <h3 class="mt-5 text-sm font-semibold text-gray-900">Priorities</h3>
+            <ul class="mt-2 space-y-2 text-sm text-gray-700 list-disc pl-5">
+                <li><span class="font-medium">P0</span> must work — a failure blocks the release.</li>
+                <li><span class="font-medium">P1</span> important — a failure needs a decision before release.</li>
+                <li><span class="font-medium">P2</span> lower risk — worth reporting, unlikely to block.</li>
+                <li><span class="font-medium">Release focus</span> marks cases covering what this release changed. Run those first.</li>
+            </ul>
+
+            <h3 class="mt-5 text-sm font-semibold text-gray-900">Filing a bug from a failed case</h3>
+            <ol class="mt-2 space-y-2 text-sm text-gray-700 list-decimal pl-5">
+                <li>Click the case's <span class="font-medium">History</span> link. Failed and blocked results have a <span class="font-medium">File GitHub issue</span> button, which opens a new GitHub issue filled in with the case, its steps, the expected result, your notes and a link back to the result.</li>
+                <li>Add any screenshots to the GitHub issue and submit it — the testbench keeps notes, not files.</li>
+                <li>Back on the history page, click <span class="font-medium">Edit result</span> and paste the issue's URL. The board then shows <em>Issue #123</em> on that case.</li>
+            </ol>
+            <div class="mt-4 rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
+                <p class="font-medium">No File GitHub issue button?</p>
+                <p class="mt-1">The application has no GitHub repository set. Django admin → <span class="font-medium">Source Applications</span> → the application → <span class="font-medium">Testbench</span> → GitHub repo, written as <code class="bg-amber-100 px-1 rounded">owner/name</code>.</p>
+            </div>
+
+            <h3 class="mt-5 text-sm font-semibold text-gray-900">Adding and changing cases</h3>
+            <ul class="mt-2 space-y-2 text-sm text-gray-700 list-disc pl-5">
+                <li>The board's <span class="font-medium">Manage</span> panel has <span class="font-medium">Add a test case</span> and <span class="font-medium">Add an area</span>; every case has an <span class="font-medium">Edit</span> link. Steps go one per line.</li>
+                <li><span class="font-medium">Delete</span> (on a case's history page) takes the case off the board but keeps its history. Its key can't be reused from the form, so a test's history never gets mixed up with a different test.</li>
+                <li><span class="font-medium">Import JSON</span> loads a whole suite from a file and <span class="font-medium">Download JSON</span> saves the current one. Areas are matched by code and cases by key. Tick <em>Delete cases that are not in the file</em> to make the file the complete script. A file with any error imports nothing and lists what to fix.</li>
+                <li>How to write good cases — wording, priorities, what to cover — is in <code class="bg-gray-100 px-1 rounded">apps/testbench/qc_guide.md</code>, the same guide Claude reads (below).</li>
+            </ul>
+        </section>
+
+        <section id="mcp">
+            <h2 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-1">Claude &amp; the MCP server</h2>
+            <p class="mt-3 text-sm text-gray-700">The helpdesk is an MCP server, so Claude — working in Claude Code
+            in any application's repository — can read and update that application's testbench suite: download it,
+            compare it with what the code does today, check a draft, and save it once you approve.</p>
+
+            <h3 class="mt-5 text-sm font-semibold text-gray-900">Connecting Claude Code</h3>
+            <ol class="mt-2 space-y-2 text-sm text-gray-700 list-decimal pl-5">
+                <li>Create a personal token on the <a href="{% url 'testbench:tokens' %}" class="text-blue-600 hover:underline">API tokens</a> page and copy it — it is shown only once. The token acts as you; delete it on that page to revoke it, and it stops working if your account is deactivated.</li>
+                <li>In a terminal, once per machine (replace <code class="bg-gray-100 px-1 rounded">&lt;token&gt;</code>):
+                    <pre class="mt-2 overflow-x-auto rounded bg-gray-100 p-3 text-xs text-gray-800"><code>claude mcp add --scope user --transport http helpdesk {{ request.scheme }}://{{ request.get_host }}/mcp \
+  --header "Authorization: Bearer &lt;token&gt;"</code></pre>
+                </li>
+                <li>In Claude Code, type <code class="bg-gray-100 px-1 rounded">/mcp</code> — <span class="font-medium">helpdesk</span> should be listed as connected.</li>
+            </ol>
+
+            <h3 class="mt-5 text-sm font-semibold text-gray-900">What to ask for</h3>
+            <ul class="mt-2 space-y-2 text-sm text-gray-700 list-disc pl-5">
+                <li><span class="font-medium">Update an application's QC suite.</span> From that application's repository, run the <code class="bg-gray-100 px-1 rounded">draft_qc_suite</code> prompt from Claude Code's <code class="bg-gray-100 px-1 rounded">/</code> menu, or just ask: <em>"Update the acme QC suite for this release — billing changed."</em> Claude reads the guide, downloads the suite, compares it with the code, validates its draft, and shows you the additions, edits and deletions before saving anything.</li>
+                <li><span class="font-medium">Find gaps.</span> <em>"Download the acme suite and list features that have no test cases."</em></li>
+                <li><span class="font-medium">Summarise a run.</span> <em>"What failed in the current acme run? Draft GitHub issues for the P0 failures."</em></li>
+                <li><span class="font-medium">Investigate one case.</span> <em>"Show me the history of ISO-03."</em></li>
+            </ul>
+
+            <h3 class="mt-5 text-sm font-semibold text-gray-900">What Claude can use</h3>
+            <div class="mt-3 overflow-x-auto">
+                <table class="min-w-full text-sm text-gray-700">
+                    <thead>
+                        <tr class="border-b border-gray-200 text-left text-xs uppercase tracking-wide text-gray-500">
+                            <th class="py-2 pr-4 font-medium">Name</th>
+                            <th class="py-2 font-medium">What it does</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 align-top">
+                        <tr><td class="py-2 pr-4"><code class="bg-gray-100 px-1 rounded">list_applications</code></td><td class="py-2">Application slugs, case counts and each open run.</td></tr>
+                        <tr><td class="py-2 pr-4"><code class="bg-gray-100 px-1 rounded">get_suite</code></td><td class="py-2">Downloads a suite as JSON — the same file <span class="font-medium">Download JSON</span> gives you.</td></tr>
+                        <tr><td class="py-2 pr-4"><code class="bg-gray-100 px-1 rounded">validate_suite</code></td><td class="py-2">Checks a draft without saving it and reports what would be added, updated and deleted.</td></tr>
+                        <tr><td class="py-2 pr-4"><code class="bg-gray-100 px-1 rounded">put_suite</code></td><td class="py-2">Saves a suite, optionally deleting cases that are not in it.</td></tr>
+                        <tr><td class="py-2 pr-4"><code class="bg-gray-100 px-1 rounded">save_case</code>, <code class="bg-gray-100 px-1 rounded">delete_case</code></td><td class="py-2">Adds or replaces one case; deletes one case (its history is kept).</td></tr>
+                        <tr><td class="py-2 pr-4"><code class="bg-gray-100 px-1 rounded">get_case_history</code></td><td class="py-2">Every result for a case, with notes and GitHub issues.</td></tr>
+                        <tr><td class="py-2 pr-4"><code class="bg-gray-100 px-1 rounded">get_current_run</code></td><td class="py-2">The latest status of every case in the open run.</td></tr>
+                        <tr><td class="py-2 pr-4"><code class="bg-gray-100 px-1 rounded">testbench://guide</code></td><td class="py-2">How to write a good QC suite.</td></tr>
+                        <tr><td class="py-2 pr-4 whitespace-nowrap"><code class="bg-gray-100 px-1 rounded">testbench://suite-schema</code></td><td class="py-2">The suite JSON format.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4 rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
+                <p class="font-medium">Claude's saves are real, and made as you.</p>
+                <p class="mt-1">They appear on the board straight away. Claude is instructed to validate and show you
+                the change summary first — read it before you approve, especially a save that deletes cases not in the
+                file, which can take many cases off the board at once. Deleted cases keep their history.</p>
+            </div>
+            <p class="mt-3 text-sm text-gray-700">Scripts can use the same token with the REST API at
+            <code class="bg-gray-100 px-1 rounded">/api/testbench/</code>. Endpoints and examples are in
+            <code class="bg-gray-100 px-1 rounded">docs/TESTBENCH.md</code>.</p>
+        </section>
+
+        <section id="apps">
+            <h2 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-1">Adding a new application</h2>
+            <ol class="mt-3 space-y-2 text-sm text-gray-700 list-decimal pl-5">
+                <li>Django admin → <span class="font-medium">Source Applications</span> → Add. Set name, slug, portal domain (<code class="bg-gray-100 px-1 rounded">support.&lt;domain&gt;</code>), mail domain (<code class="bg-gray-100 px-1 rounded">mail.&lt;domain&gt;</code>), branding, and the origins allowed to embed the widget.</li>
+                <li>Have ops run <code class="bg-gray-100 px-1 rounded">just ses-setup &lt;domain&gt;</code> (DNS + SES) and add the portal domain to the deployment config — details in the repo README.</li>
+                <li>Embed the widget in the product using the app's API key/secret — integration guide in <code class="bg-gray-100 px-1 rounded">docs/INTEGRATE.md</code>.</li>
+            </ol>
+            <p class="mt-3 text-sm text-gray-700 bg-amber-50 border-l-4 border-amber-400 px-3 py-2 rounded-r">
+                <span class="font-medium">Branding edits take up to 5 minutes to appear.</span>
+                Each portal domain caches its application record for 5 minutes, so after you
+                change a product name, primary color, logo, or email signature the portal and
+                outgoing emails keep using the old values until the cache expires. Reload after
+                5 minutes before assuming an edit did not save.
+            </p>
+        </section>
+    </article>
+</div>
+{% endblock %}

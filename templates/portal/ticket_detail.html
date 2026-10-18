@@ -1,0 +1,52 @@
+{% extends "portal/base.html" %}
+{% load core_tags %}
+
+{% block title %}{{ ticket.reference_number }} - {{ ticket.subject }}{% endblock %}
+
+{% block content %}
+<a href="{% url 'portal:ticket_list' %}" class="text-sm text-blue-600 hover:text-blue-800">&larr; All tickets</a>
+
+<div class="card p-6 my-6">
+    <div class="flex items-start justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-bold text-gray-900">{{ ticket.subject }}</h1>
+            <p class="text-sm text-gray-500 mt-1">
+                {{ ticket.reference_number }} &middot; opened {{ ticket.created_at|timesince }} ago
+            </p>
+        </div>
+        <div class="flex-shrink-0">{% status_badge ticket.status %}</div>
+    </div>
+    <div class="mt-4 prose prose-sm max-w-none text-gray-700">
+        {{ ticket.body|urlize|linebreaks }}
+    </div>
+    {% include "tickets/partials/attachment_links.html" with attachments=ticket.initial_attachments %}
+</div>
+
+{% include "portal/_timeline.html" %}
+
+{% if can_reply %}
+<div class="card p-6">
+    <h3 class="text-sm font-semibold text-gray-700 mb-3">Reply</h3>
+    {% if attachment_errors %}
+    <div class="mb-3 rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+        <p class="font-medium">Your reply was posted, but some files were not attached:</p>
+        <ul class="list-disc pl-5 mt-1">
+            {% for error in attachment_errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% if form.body.errors %}<p class="text-sm text-red-600 mb-2">{{ form.body.errors.0 }}</p>{% endif %}
+        <textarea name="body" rows="4" class="form-input mb-3" placeholder="Write a reply..." required></textarea>
+        <input type="file" name="attachments" multiple
+               class="form-input mb-3 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-gray-100 file:text-gray-700">
+        <button type="submit" class="btn btn-primary">Send reply</button>
+    </form>
+</div>
+{% else %}
+<div class="card p-4 text-sm text-gray-500 text-center">
+    This ticket is {{ ticket.get_status_display|lower }} and can no longer receive replies.
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "inbound_email/base_email.html" %}
+{% block body %}
+<p>Hello,</p>
+<p>Your support ticket <strong>{{ ref }}</strong> has been resolved.</p>
+<p><strong>Subject:</strong> {{ ticket.subject }}</p>
+<p>We would love to hear your feedback. How would you rate your experience?</p>
+<p>
+{% for rating, url in rating_links.items %}<a href="{{ url }}" style="display:inline-block;margin-right:8px;color:{{ primary_color|default:"#2563eb" }};">{{ rating }}</a>{% endfor %}
+</p>
+<p>Thank you for your feedback!</p>
+{% endblock %}

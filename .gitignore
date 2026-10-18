@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+wheels/
+.venv/
+
+# Django
+db.sqlite3
+*.log
+media/
+staticfiles/
+
+# Environment
+.env
+
+# OS
+.DS_Store
+
+# Node / Widget
+node_modules/
+widget/dist/
+
+# Tailwind
+theme/css/
+
+# Tailwind CLI binary
+.django_tailwind_cli/
+
+# Claude
+.claude/
+
+# Editor and script backups. The glob is *.bak* , not *.bak -- the latter does
+# not match a timestamped .env.bak.20260418-160832, which is exactly the kind of
+# file that leaks live secrets into a repo.
+*.bak*

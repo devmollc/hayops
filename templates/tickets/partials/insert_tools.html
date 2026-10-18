@@ -1,0 +1,32 @@
+{% comment %}
+Canned responses and KB links for the textarea whose id is `target`.
+Included by the reply form and the create-ticket form.
+{% endcomment %}
+<div class="mb-3" x-data="{ panel: null }">
+    <div class="flex items-center gap-4 text-sm">
+        <button type="button" @click="panel = panel === 'canned' ? null : 'canned'" class="text-blue-600 hover:text-blue-800">Insert canned response</button>
+        <button type="button" @click="panel = panel === 'kb' ? null : 'kb'" class="text-blue-600 hover:text-blue-800">Insert KB article</button>
+    </div>
+
+    <div x-show="panel === 'canned'" x-cloak class="mt-2 rounded-md border bg-gray-50 p-3">
+        <input type="text"
+               hx-get="{% url 'tickets:canned_search' %}?queue_id={{ queue_id|default:'' }}"
+               hx-trigger="keyup changed delay:300ms, intersect once"
+               hx-target="#canned-results"
+               name="q"
+               placeholder="Search canned responses..."
+               class="form-input mb-2">
+        <div id="canned-results" data-target="{{ target }}"></div>
+    </div>
+
+    <div x-show="panel === 'kb'" x-cloak class="mt-2 rounded-md border bg-gray-50 p-3">
+        <input type="text"
+               hx-get="{% url 'kb:kb_search' %}"
+               hx-trigger="keyup changed delay:300ms, intersect once"
+               hx-target="#kb-results"
+               name="q"
+               placeholder="Search knowledgebase..."
+               class="form-input mb-2">
+        <div id="kb-results" data-target="{{ target }}"></div>
+    </div>
+</div>

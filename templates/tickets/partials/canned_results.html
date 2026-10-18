@@ -1,0 +1,19 @@
+{% for canned in canned_responses %}
+<div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+    <div>
+        <p class="text-sm font-medium text-gray-900">{{ canned.title }}</p>
+        {% if canned.shortcut %}<span class="text-xs text-gray-400">/{{ canned.shortcut }}</span>{% endif %}
+    </div>
+    {% comment %}
+    The textarea to fill lives on the results container, which htmx swaps the
+    inside of -- so the id survives every search and no view has to pass it on.
+    {% endcomment %}
+    <button type="button"
+            class="btn btn-sm btn-secondary"
+            data-insert-url="{% url 'tickets:use_canned' canned.pk %}">
+        Insert
+    </button>
+</div>
+{% empty %}
+<p class="text-sm text-gray-500 py-2">No canned responses found.</p>
+{% endfor %}

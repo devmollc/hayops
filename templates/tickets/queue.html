@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}{% if user.is_staff %}Ticket Queue{% else %}My Tickets{% endif %} - HayOps{% endblock %}
+
+{% block content %}
+<div class="flex gap-6">
+    {% if user.is_staff %}
+    <!-- Sidebar: Saved Views -->
+    <aside class="w-56 flex-shrink-0 hidden lg:block">
+        <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Views</h3>
+        <nav class="space-y-1">
+            <a href="{% url 'tickets:queue' %}" class="block px-3 py-2 text-sm rounded-md hover:bg-gray-100 {% if not current_filters %}bg-blue-50 text-blue-700{% else %}text-gray-700{% endif %}">
+                All Open Tickets
+            </a>
+            <a href="{% url 'tickets:queue' %}?assigned_to=me" class="block px-3 py-2 text-sm rounded-md hover:bg-gray-100 text-gray-700">
+                My Tickets
+            </a>
+            <a href="{% url 'tickets:queue' %}?assigned_to=unassigned" class="block px-3 py-2 text-sm rounded-md hover:bg-gray-100 text-gray-700">
+                Unassigned
+            </a>
+            {% for view in saved_views %}
+            <div class="flex items-center group">
+                <a href="{% url 'tickets:queue' %}?{{ view.filters|urlencode }}" class="flex-1 block px-3 py-2 text-sm rounded-md hover:bg-gray-100 text-gray-700">
+                    {{ view.name }}
+                </a>
+                <form method="post" action="{% url 'tickets:delete_saved_view' view.pk %}" class="hidden group-hover:block">
+                    {% csrf_token %}
+                    <button type="submit" class="text-gray-400 hover:text-red-500 text-xs px-1">&times;</button>
+                </form>
+            </div>
+            {% endfor %}
+        </nav>
+
+        <!-- Save Current View -->
+        <div x-data="{ open: false }" class="mt-4">
+            <button @click="open = !open" class="text-sm text-blue-600 hover:text-blue-800">+ Save Current View</button>
+            <form x-show="open" method="post" action="{% url 'tickets:save_view' %}" class="mt-2 space-y-2">
+                {% csrf_token %}
+                {% for key, val in request.GET.items %}
+                <input type="hidden" name="{{ key }}" value="{{ val }}">
+                {% endfor %}
+                <input type="text" name="name" placeholder="View name" class="form-input text-sm" required>
+                <label class="flex items-center text-sm text-gray-600">
+                    <input type="checkbox" name="is_shared" class="mr-2"> Share with team
+                </label>
+                <button type="submit" class="btn btn-sm btn-primary">Save</button>
+            </form>
+        </div>
+    </aside>
+    {% endif %}
+
+    <!-- Main content -->
+    <div class="flex-1 min-w-0">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">{% if user.is_staff %}Tickets{% else %}My Tickets{% endif %}</h1>
+            <a href="{% url 'tickets:create' %}" class="btn btn-primary">New Ticket</a>
+        </div>
+
+        <!-- Filters -->
+        <form method="get" class="card p-4 mb-4">
+            <div class="grid grid-cols-2 {% if user.is_staff %}md:grid-cols-6{% else %}md:grid-cols-3{% endif %} gap-3">
+                <div>
+                    <select name="status" class="form-input" data-submit="submit">
+                        <option value="">All Statuses</option>
+                        {% for value, label in filter_form.fields.status.choices %}
+                        {% if value %}
+                        <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <select name="priority" class="form-input" data-submit="submit">
+                        <option value="">All Priorities</option>
+                        {% for value, label in filter_form.fields.priority.choices %}
+                        {% if value %}
+                        <option value="{{ value }}" {% if request.GET.priority == value %}selected{% endif %}>{{ label }}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if user.is_staff %}
+                <div>
+                    <select name="queue" class="form-input" data-submit="submit">
+                        <option value="">All Queues</option>
+                        {% for q in queues %}
+                        <option value="{{ q.slug }}" {% if request.GET.queue == q.slug %}selected{% endif %}>{{ q.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <select name="source_application" class="form-input" data-submit="submit">
+                        <option value="">All Applications</option>
+                        {% for app in applications %}
+                        <option value="{{ app.slug }}" {% if request.GET.source_application == app.slug %}selected{% endif %}>{{ app.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <select name="assigned_to" class="form-input" data-submit="submit">
+                        <option value="">Anyone</option>
+                        <option value="me" {% if request.GET.assigned_to == "me" %}selected{% endif %}>My Tickets</option>
+                        <option value="unassigned" {% if request.GET.assigned_to == "unassigned" %}selected{% endif %}>Unassigned</option>
+                    </select>
+                </div>
+                {% endif %}
+                <div>
+                    <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Search..." class="form-input">
+                </div>
+            </div>
+        </form>
+
+        <!-- Ticket List + bulk actions -->
+        {% comment %}
+        The form wraps the list so the row checkboxes post with it, and the Alpine state
+        lives out here so the 10s poll swapping #ticket-list cannot clear it.
+        {% endcomment %}
+        <form method="post" action="{% url 'tickets:bulk_action' %}"
+              x-data="{
+                  selected: [],
+                  confirmOpen: false,
+                  confirmText: '',
+                  get pageIds() {
+                      return [...$root.querySelectorAll('input[name=ticket_ids]')].map(el => el.value);
+                  },
+                  get allChecked() {
+                      const ids = this.pageIds;
+                      return ids.length > 0 && ids.every(id => this.selected.includes(id));
+                  },
+                  toggleAll(checked) { this.selected = checked ? this.pageIds : []; }
+              }"
+              x-effect="window.__bulkActive = selected.length > 0">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+            {% if user.is_staff %}
+            <div x-show="selected.length" x-cloak
+                 class="card border-blue-200 bg-blue-50 p-3 mb-4 flex flex-wrap items-center gap-3">
+                <span class="text-sm font-medium text-gray-700 whitespace-nowrap"
+                      x-text="selected.length + (selected.length === 1 ? ' ticket' : ' tickets') + ' selected'"></span>
+
+                <select name="status" class="form-input w-auto">
+                    <option value="">Status: no change</option>
+                    <option value="open">Open</option>
+                    <option value="pending">Pending</option>
+                    <option value="resolved">Resolved</option>
+                    <option value="closed">Closed</option>
+                </select>
+
+                <select name="priority" class="form-input w-auto">
+                    <option value="">Priority: no change</option>
+                    {% for value, label in filter_form.fields.priority.choices %}
+                    {% if value %}<option value="{{ value }}">{{ label }}</option>{% endif %}
+                    {% endfor %}
+                </select>
+
+                <select name="assigned_to" class="form-input w-auto">
+                    <option value="">Assignee: no change</option>
+                    <option value="__none__">Unassign</option>
+                    {% for agent in agents %}
+                    <option value="{{ agent.pk }}">{{ agent|agent_name }}</option>
+                    {% endfor %}
+                </select>
+
+                <label class="flex items-center text-sm text-gray-600 whitespace-nowrap"
+                       title="Off by default: a bulk sweep should not mail every submitter.">
+                    <input type="checkbox" name="notify" class="mr-2 rounded border-gray-300"> Notify customers
+                </label>
+
+                <button type="submit" name="action" value="update" class="btn btn-sm btn-primary">Apply</button>
+
+                {% if user.is_superuser %}
+                <button type="button" @click="confirmOpen = true; confirmText = ''"
+                        class="btn btn-sm btn-danger ml-auto">Delete&hellip;</button>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div id="ticket-list"
+                 hx-get="{{ request.get_full_path }}"
+                 hx-trigger="every 10s [!window.__bulkActive]"
+                 hx-include="#last-event-marker"
+                 hx-swap="innerHTML">
+                {% include "tickets/partials/ticket_list.html" %}
+            </div>
+
+            {% if user.is_superuser %}
+            <div x-show="confirmOpen" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                <div class="card p-6 w-full max-w-md" @click.outside="confirmOpen = false">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        Delete <span x-text="selected.length"></span> ticket(s)?
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        This permanently removes the tickets along with their comments, attachments and
+                        history, and deletes the attachment files from storage. It cannot be undone.
+                    </p>
+                    <label class="form-label mt-4">
+                        Type <span class="font-mono font-semibold">DELETE</span> to confirm
+                    </label>
+                    <input type="text" name="confirm" x-model="confirmText" autocomplete="off"
+                           class="form-input" @keydown.enter.prevent>
+                    <div class="mt-5 flex justify-end gap-2">
+                        <button type="button" @click="confirmOpen = false" class="btn btn-sm btn-secondary">Cancel</button>
+                        <button type="submit" name="action" value="delete"
+                                :disabled="confirmText !== 'DELETE'"
+                                class="btn btn-sm btn-danger disabled:opacity-50 disabled:cursor-not-allowed">
+                            Delete permanently
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+{% endblock %}

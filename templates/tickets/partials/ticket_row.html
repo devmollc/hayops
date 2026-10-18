@@ -1,0 +1,50 @@
+{% load core_tags %}
+
+<tr class="hover:bg-gray-50" id="ticket-row-{{ ticket.pk }}">
+    {% if user.is_staff %}
+    {% comment %}
+    x-model reaches the `selected` array on the form wrapper, which sits outside the
+    htmx-swapped region, so a poll that redraws this row keeps the box ticked.
+    {% endcomment %}
+    <td class="px-4 py-3 w-8">
+        <input type="checkbox" name="ticket_ids" value="{{ ticket.pk }}" x-model="selected"
+               class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+               aria-label="Select {{ ticket.reference_number }}">
+    </td>
+    {% endif %}
+    {# w-full + max-w-0 + truncate: subject absorbs the slack, every other column stays nowrap #}
+    <td class="px-4 py-3 w-full max-w-0">
+        <a href="{% url 'tickets:detail' ticket.reference_number %}" class="text-blue-600 hover:text-blue-800 font-medium">
+            {{ ticket.reference_number }}
+        </a>
+        <p class="text-sm text-gray-600 truncate" title="{{ ticket.subject }}">{{ ticket.subject }}</p>
+    </td>
+    <td class="px-4 py-3">{% app_chip ticket.source_application %}</td>
+    <td class="px-4 py-3">{% status_badge ticket.status %}</td>
+    <td class="px-4 py-3 whitespace-nowrap">{% priority_badge ticket.priority %}</td>
+    <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+        {% if ticket.queue %}{{ ticket.queue.name }}{% else %}<span class="text-gray-300">&mdash;</span>{% endif %}
+    </td>
+    <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
+        {% if ticket.assigned_to %}
+        <span title="{{ ticket.assigned_to.email }}">{{ ticket.assigned_to|agent_name|truncatechars:18 }}</span>
+        {% else %}
+        <span class="text-gray-300">&mdash;</span>
+        {% endif %}
+    </td>
+    <td class="px-4 py-3 text-right text-sm text-gray-500 whitespace-nowrap tabular-nums"
+        title="{{ ticket.created_at }}">{{ ticket.created_at|time_since_short }}</td>
+    <td class="px-4 py-3 text-right whitespace-nowrap">
+        {% if not ticket.assigned_to %}
+        {% comment %}
+        No <form> here: this row renders inside the bulk-action form on the queue, and the
+        HTML parser drops a nested form outright -- the button ended up submitting the bulk
+        form instead of claiming. CSRF comes from hx-headers on <body>.
+        {% endcomment %}
+        <button type="button" class="btn btn-sm btn-secondary"
+                hx-post="{% url 'tickets:claim' ticket.pk %}"
+                hx-target="#ticket-row-{{ ticket.pk }}"
+                hx-swap="outerHTML">Claim</button>
+        {% endif %}
+    </td>
+</tr>

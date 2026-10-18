@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}{{ ticket.reference_number }}{% if ticket.source_application %} · {{ ticket.source_application.name }}{% endif %} - HayOps{% endblock %}
+
+{% block content %}
+<div x-data="{ showMerge: false }">
+<div class="mb-4 flex items-center justify-between">
+    <a href="{% url 'tickets:queue' %}" class="text-sm text-blue-600 hover:text-blue-800">&larr; Back to Queue</a>
+    <div class="flex items-center space-x-2">
+        {% if user.is_staff %}
+        {% if not ticket.assigned_to %}
+        <form method="post" action="{% url 'tickets:claim' ticket.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary btn-sm">Claim Ticket</button>
+        </form>
+        {% endif %}
+        <a href="{% url 'tickets:edit' ticket.pk %}" class="btn btn-secondary btn-sm">Edit</a>
+        <button @click="showMerge = true" class="btn btn-secondary btn-sm">Merge Into...</button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Collision Banner -->
+<div id="collision-banner"
+     hx-get="{% url 'tickets:heartbeat' ticket.pk %}"
+     hx-trigger="every 7s"
+     hx-swap="innerHTML">
+    {% include "tickets/partials/collision_banner.html" %}
+</div>
+
+{% if ticket.status == "merged" %}
+<div class="bg-purple-50 border border-purple-200 rounded-md p-4 mb-4">
+    <p class="text-purple-800">
+        This ticket has been merged into
+        <a href="{% url 'tickets:detail' ticket.merged_into.reference_number %}" class="font-medium underline">
+            {{ ticket.merged_into.reference_number }}
+        </a>.
+    </p>
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Main content -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Header -->
+        <div class="card p-6">
+            <div class="flex items-start justify-between">
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900">{{ ticket.subject }}</h1>
+                    <p class="text-sm text-gray-500 mt-1">
+                        {{ ticket.reference_number }} &middot;
+                        Opened {{ ticket.created_at|timesince }} ago
+                        {% if ticket.submitter %} by {{ ticket.submitter.email }}{% endif %}
+                    </p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    {% if ticket.source_application %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800">
+                        {{ ticket.source_application.name }}
+                    </span>
+                    {% endif %}
+                    {% status_badge ticket.status %}
+                    {% priority_badge ticket.priority %}
+                </div>
+            </div>
+            <div class="mt-4 prose prose-sm max-w-none text-gray-700">
+                {{ ticket.body|urlize|linebreaks }}
+            </div>
+            {% include "tickets/partials/attachment_links.html" with attachments=ticket.initial_attachments %}
+        </div>
+
+        <!-- Tags -->
+        {% if user.is_staff %}
+        <div id="tag-section">
+            {% include "tickets/partials/tag_list.html" %}
+        </div>
+        {% endif %}
+
+        <!-- Timeline -->
+        <div class="space-y-4" id="timeline"
+             hx-get="{% url 'tickets:timeline_poll' ticket.pk %}"
+             hx-trigger="every 10s"
+             hx-include="#timeline-marker"
+             hx-swap="innerHTML">
+            {% include "tickets/partials/timeline.html" %}
+        </div>
+
+        <!-- Comment Form -->
+        {% if ticket.status != "merged" and ticket.status != "closed" %}
+        {% include "tickets/partials/comment_form.html" %}
+        {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div id="ticket-sidebar">
+        {% include "tickets/partials/ticket_sidebar.html" %}
+    </div>
+</div>
+
+<!-- Merge Modal -->
+{% if user.is_staff %}
+<template x-teleport="body">
+    <div x-show="showMerge" x-cloak class="fixed inset-0 z-50 overflow-y-auto" @keydown.escape="showMerge = false">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black/50" @click="showMerge = false"></div>
+            <div class="relative bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                <h3 class="text-lg font-medium mb-4">Merge Ticket</h3>
+                <p class="text-sm text-gray-600 mb-4">
+                    Merge {{ ticket.reference_number }} into another ticket. This will move all comments and attachments.
+                </p>
+                <div class="mb-4">
+                    <label for="merge-search" class="form-label">1. Find the ticket to merge into</label>
+                    <input type="text"
+                           id="merge-search"
+                           hx-get="{% url 'tickets:search_tickets' %}?exclude={{ ticket.pk }}"
+                           hx-trigger="keyup changed delay:300ms"
+                           hx-target="#merge-search-results"
+                           name="q"
+                           placeholder="Search by reference or subject..."
+                           class="form-input">
+                    <div id="merge-search-results" class="mt-2 max-h-56 overflow-y-auto"></div>
+                </div>
+                <form method="post" action="{% url 'tickets:merge' ticket.pk %}">
+                    {% csrf_token %}
+                    <label for="merge-target" class="form-label">2. Merge into</label>
+                    <input type="text" id="merge-target" name="target_reference" placeholder="Pick a result above, or type a reference (e.g. HD-0001)" class="form-input mb-3" required>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" @click="showMerge = false" class="btn btn-secondary">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Merge</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</template>
+{% endif %}
+</div>
+{% endblock %}

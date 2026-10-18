@@ -1,0 +1,11 @@
+{% load core_tags %}
+<a href="{% url 'portal:ticket_detail' reference=ticket.reference_number %}"
+   class="card p-4 flex items-start justify-between gap-4 hover:border-gray-300 transition-colors">
+    <div class="min-w-0">
+        <p class="font-medium text-gray-900 truncate">{{ ticket.subject }}</p>
+        <p class="text-sm text-gray-500 mt-1">
+            {{ ticket.reference_number }} &middot; updated {{ ticket.updated_at|timesince }} ago
+        </p>
+    </div>
+    <div class="flex-shrink-0">{% status_badge ticket.status %}</div>
+</a>

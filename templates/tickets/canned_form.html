@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}{% if canned %}Edit{% else %}New{% endif %} Canned Response{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl">
+    <div class="mb-6">
+        <a href="{% url 'tickets:canned_list' %}" class="text-sm text-blue-600 hover:underline">&larr; Back to Canned Responses</a>
+    </div>
+    <h1 class="mb-6 text-xl font-bold text-gray-900">{% if canned %}Edit canned response{% else %}New canned response{% endif %}</h1>
+
+    <form method="post" class="card p-6">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+
+        {% for field in form %}
+        <div class="mb-4">
+            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+            {{ field }}
+            {% if field.help_text %}
+            <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+            {% endif %}
+            {% for error in field.errors %}
+            <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endfor %}
+
+        <div class="flex items-center space-x-3 pt-2">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a href="{{ next }}" class="text-sm text-gray-500 hover:text-gray-700">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

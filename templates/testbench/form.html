@@ -1,0 +1,34 @@
+{% extends "testbench/base.html" %}
+{% block title %}{{ title }} · Testbench{% endblock %}
+{% block content %}
+<div class="tb">
+  <header class="masthead">
+    <div class="masthead-inner">
+      <div>
+        <div class="eyebrow"><a href="{% url 'testbench:board' app.slug %}">{{ app.branding_name }} Test Bench</a></div>
+        <h1>{{ title }}</h1>
+      </div>
+    </div>
+  </header>
+  <div class="page narrow">
+    <form method="post" enctype="multipart/form-data" class="panel panel-pad">
+      {% csrf_token %}
+      {% if hint %}<p class="err">{{ hint }} <a href="{% url 'testbench:section_create' app.slug %}">Add an area</a></p>{% endif %}
+      {% for error in form.non_field_errors %}<p class="err">{{ error }}</p>{% endfor %}
+      {% for field in form %}
+      <div class="fld-row{% if field.widget_type == 'checkbox' %} check{% endif %}">
+        {% if field.widget_type == "checkbox" %}
+        <label class="fld">{{ field }} {{ field.label }}</label>
+        {% else %}
+        <label class="fld" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% endif %}
+        {% if field.help_text %}<p class="hint">{{ field.help_text }}</p>{% endif %}
+        {% for error in field.errors %}<p class="err">{{ error }}</p>{% endfor %}
+      </div>
+      {% endfor %}
+      <div class="actions"><button type="submit" class="btn">{{ submit_label|default:"Save" }}</button><a href="{{ cancel_url }}">Cancel</a></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

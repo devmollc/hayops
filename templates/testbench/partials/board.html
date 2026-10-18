@@ -1,0 +1,130 @@
+{% load core_tags %}
+<input type="hidden" id="tb-marker" name="marker" value="{{ marker }}">
+<header class="masthead">
+  <div class="masthead-inner">
+    <div>
+      <div class="eyebrow"><a href="{% url 'testbench:index' %}">Manual QC</a> · {% if run %}{{ run.name }}{% else %}No run open{% endif %}</div>
+      <h1>{{ app.branding_name }} Test Bench</h1>
+      <div class="sub">{% if run.notes %}{{ run.notes }}{% else %}Claim a case before you start so nobody doubles up. Results and notes are shared with everyone and kept for every run.{% endif %}</div>
+    </div>
+    <div class="env-block">
+      {% if not run %}<span class="env-pill closed">No run open</span>{% elif run.closed_at %}<span class="env-pill closed">Closed run</span>{% else %}<span class="env-pill">Run open</span>{% endif %}
+      {% if run %}
+      <div class="env-row"><span class="k">Run</span><span class="v">{{ run.name }}</span></div>
+      {% if run.build %}<div class="env-row"><span class="k">Build</span><span class="v">{{ run.build }}</span></div>{% endif %}
+      <div class="env-row"><span class="k">Started</span><span class="v">{{ run.started_by|agent_name|default:"—" }} · {{ run.created_at|date:"M j" }}</span></div>
+      {% endif %}
+      <details class="pop">
+        <summary class="btn ghost sm">Start new run</summary>
+        <form method="post" action="{% url 'testbench:run_start' app.slug %}" class="pop-body">
+          {% csrf_token %}
+          <div><label class="fld" for="run-name">Name</label><input type="text" id="run-name" name="name" maxlength="255" required placeholder="v1.4.0 regression"></div>
+          <div><label class="fld" for="run-build">Build</label><input type="text" id="run-build" name="build" maxlength="100" placeholder="Version or commit under test"></div>
+          <div><label class="fld" for="run-notes">Notes</label><textarea id="run-notes" name="notes" rows="2"></textarea></div>
+          {% if run and not run.closed_at %}<p class="hint">Closes {{ run.name }}. Its results stay in each case's history.</p>{% endif %}
+          <button type="submit" class="btn">Start run</button>
+        </form>
+      </details>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="rail">
+    <div class="panel panel-pad">
+      <h3>Run progress</h3>
+      <div class="meter" aria-hidden="true">
+        <i class="pass" style="width:{% widthratio tally.pass total 100 %}%"></i>
+        <i class="fail" style="width:{% widthratio tally.fail total 100 %}%"></i>
+        <i class="blocked" style="width:{% widthratio tally.blocked total 100 %}%"></i>
+        <i class="working" style="width:{% widthratio tally.in_progress total 100 %}%"></i>
+      </div>
+      <div class="tally">
+        <div class="tally-row"><span class="dot pass"></span><span class="lbl">Passed</span><span class="n">{{ tally.pass }}</span></div>
+        <div class="tally-row"><span class="dot fail"></span><span class="lbl">Failed</span><span class="n">{{ tally.fail }}</span></div>
+        <div class="tally-row"><span class="dot blocked"></span><span class="lbl">Blocked</span><span class="n">{{ tally.blocked }}</span></div>
+        <div class="tally-row"><span class="dot working"></span><span class="lbl">In progress</span><span class="n">{{ tally.in_progress }}</span></div>
+        <div class="tally-row"><span class="dot todo"></span><span class="lbl">Not run</span><span class="n">{{ tally.todo }}</span></div>
+      </div>
+    </div>
+
+    <div class="panel panel-pad">
+      <h3>Show</h3>
+      <div class="chips">
+        {% for value, label in show_filters %}
+        <a class="chip" href="?{% if request.GET.run %}run={{ run.pk }}&amp;{% endif %}show={{ value }}"{% if value == show %} aria-current="true"{% endif %}>{{ label }}</a>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="panel panel-pad">
+      <h3>Areas</h3>
+      <nav class="idx">
+        {% for section in sections %}
+        <a href="#s-{{ section.code }}">
+          <span class="nm">{{ section.name }}</span>
+          <span class="bar"><i class="pass" style="width:{% widthratio section.tally.pass section.total 100 %}%"></i><i class="fail" style="width:{% widthratio section.tally.fail section.total 100 %}%"></i><i class="blocked" style="width:{% widthratio section.tally.blocked section.total 100 %}%"></i></span>
+          <span class="ct">{{ section.done }}/{{ section.total }}</span>
+        </a>
+        {% empty %}
+        <p class="muted">No areas yet.</p>
+        {% endfor %}
+      </nav>
+    </div>
+
+    <div class="panel panel-pad">
+      <h3>Runs</h3>
+      <nav class="idx">
+        {% for r in runs %}
+        <a href="?run={{ r.pk }}"{% if r.pk == run.pk %} aria-current="true"{% endif %}>
+          <span class="nm">{{ r.name }}</span>
+          <span class="ct">{% if r.closed_at %}{{ r.created_at|date:"M j" }}{% else %}open{% endif %}</span>
+        </a>
+        {% empty %}
+        <p class="muted">No runs yet.</p>
+        {% endfor %}
+      </nav>
+    </div>
+
+    <div class="panel panel-pad">
+      <h3>Manage</h3>
+      <nav class="idx">
+        <a href="{% url 'testbench:case_create' app.slug %}"><span class="nm">Add a test case</span></a>
+        <a href="{% url 'testbench:section_create' app.slug %}"><span class="nm">Add an area</span></a>
+        <a href="{% url 'testbench:suite_import' app.slug %}"><span class="nm">Import JSON</span></a>
+        <a href="{% url 'testbench:suite_export' app.slug %}"><span class="nm">Download JSON</span></a>
+        <a href="{% url 'testbench:tokens' %}"><span class="nm">API tokens</span></a>
+      </nav>
+    </div>
+  </aside>
+
+  <div class="tb-main">
+    {% if not run %}
+    <div class="panel panel-pad notice">No run is open. Start one (top right) to claim cases and record results.</div>
+    {% elif run.closed_at %}
+    <div class="panel panel-pad notice">This run is closed, so it is read-only. <a href="{% url 'testbench:board' app.slug %}">Back to the current run</a></div>
+    {% endif %}
+
+    {% for section in sections %}
+    {% if section.visible_cases %}
+    <section class="section" id="s-{{ section.code }}">
+      <div class="section-head">
+        <span class="code">{{ section.code }}</span>
+        <h2>{{ section.name }}</h2>
+        <a class="edit" href="{% url 'testbench:section_edit' app.slug section.code %}">Edit area</a>
+      </div>
+      {% if section.note %}<p class="section-note">{{ section.note|urlize_blank }}</p>{% endif %}
+      <div class="cases">
+        {% for case in section.visible_cases %}{% include "testbench/partials/case_card.html" %}{% endfor %}
+      </div>
+    </section>
+    {% endif %}
+    {% endfor %}
+
+    {% if not total %}
+    <div class="panel panel-pad">No test cases yet. <a href="{% url 'testbench:case_create' app.slug %}">Add one</a>, <a href="{% url 'testbench:suite_import' app.slug %}">import a JSON file</a>, or load a suite through the API — see docs/TESTBENCH.md.</div>
+    {% elif not visible_count %}
+    <div class="panel panel-pad">Nothing matches this filter. <a href="?{% if request.GET.run %}run={{ run.pk }}{% endif %}">Show all</a></div>
+    {% endif %}
+  </div>
+</div>

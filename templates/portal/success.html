@@ -1,0 +1,19 @@
+{% extends "portal/base.html" %}
+
+{% block title %}Check your email{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto text-center card p-8">
+    <h1 class="text-xl font-semibold text-gray-900 mb-2">Check your email</h1>
+    <p class="text-gray-600">We've received your request and sent a confirmation to your email with a link to track it.</p>
+    {% if attachment_errors %}
+    <div class="mt-4 rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800 text-left">
+        <p class="font-medium">Your ticket was created, but some files were not attached:</p>
+        <ul class="list-disc pl-5 mt-1">
+            {% for error in attachment_errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+        <p class="mt-1">Reply to the confirmation email to send them again.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

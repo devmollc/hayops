@@ -1,0 +1,15 @@
+{% extends "inbound_email/base_email.html" %}
+{% block body %}
+<p>Hello,</p>
+<p>There is a new reply on your support ticket <strong>{{ ref }}</strong>.</p>
+<p><strong>Subject:</strong> {{ ticket.subject }}</p>
+{% if comment %}
+<div style="border-left:3px solid {{ primary_color|default:"#2563eb" }}; padding:4px 0 4px 12px; margin:16px 0; color:#374151;">
+    {{ comment.body|truncatechars:2000|urlize|linebreaks }}
+</div>
+{% endif %}
+<p>Just reply to this email to respond{% if login_url %}, or view the whole conversation and your other tickets:{% endif %}</p>
+{% if login_url %}
+<p><a href="{{ login_url }}" style="color:{{ primary_color|default:"#2563eb" }};">View your ticket</a></p>
+{% endif %}
+{% endblock %}

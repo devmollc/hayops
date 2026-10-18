@@ -1,0 +1,9 @@
+[Staff copy] New ticket {{ ref }}: {{ ticket.subject }}
+
+From: {{ ticket.submitter.email }}
+
+Open in the agent queue (requires a staff sign-in):
+{{ detail_url }}
+
+The customer got their own message with a link into the support portal. This
+one is the staff copy -- if you are the customer here, use that email instead.

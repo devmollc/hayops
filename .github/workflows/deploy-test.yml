@@ -1,0 +1,95 @@
+name: Deploy to Test
+
+on:
+  push:
+    branches: [test]
+
+env:
+  APP_NAME: helpdesk
+  REGISTRY: ghcr.io
+
+jobs:
+  # Nothing is built or shipped until the suite passes.
+  test:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # Deploy target lives in repository variables, not here: TEST_DEPLOY_COMMAND is
+      # the shell command run on the server to pull and restart (see
+      # deploy/README.md). Fail loudly when it is unset -- an empty command would
+      # leave the old container running and the health check would pass on it.
+      - name: Check deploy configuration
+        run: |
+          if [ -z "${{ vars.TEST_DEPLOY_COMMAND }}" ]; then
+            echo "::error::Set the TEST_DEPLOY_COMMAND repository variable (see deploy/README.md)"
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set image name
+        run: echo "IMAGE=${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.APP_NAME }}" >> $GITHUB_ENV
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:test
+            ${{ env.IMAGE }}:test-${{ github.sha }}
+
+      # No migrate step here. The app image runs `migrate` in its CMD before
+      # gunicorn starts (see Dockerfile), and the deploy command should migrate
+      # with the new image ahead of the swap. A third migrate raced the container's own on
+      # 2026-08-02 and failed the deploy with DuplicateColumn.
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ vars.TEST_SERVER_HOST }}
+          username: ${{ vars.SERVER_USER }}
+          key: ${{ secrets.TEST_SERVER_SSH_KEY }}
+          script: |
+            set -e
+            # Authenticate the pull ourselves. Another repo deploying to the same
+            # server logs in with its own workflow-scoped GITHUB_TOKEN, which
+            # GitHub revokes when that run ends -- and that login overwrites the
+            # server's stored credential, so ambient state cannot be relied on.
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+            ${{ vars.TEST_DEPLOY_COMMAND }}
+
+      - name: Health check
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ vars.TEST_SERVER_HOST }}
+          username: ${{ vars.SERVER_USER }}
+          key: ${{ secrets.TEST_SERVER_SSH_KEY }}
+          script: |
+            set -e
+            # Host: localhost matches the ALLOWED_HOSTS fallback regardless of
+            # env config; X-Forwarded-Proto stops SECURE_SSL_REDIRECT bouncing us.
+            for i in $(seq 1 20); do
+              code=$(docker exec helpdesk-test-app curl -s -o /dev/null -w '%{http_code}' \
+                -H 'Host: localhost' -H 'X-Forwarded-Proto: https' \
+                http://localhost:8000/ht/ || true)
+              if [ "$code" = "200" ]; then echo "healthy"; exit 0; fi
+              echo "attempt $i: $code"; sleep 3
+            done
+            echo "test app did not become healthy"
+            docker logs --tail 50 helpdesk-test-app
+            exit 1

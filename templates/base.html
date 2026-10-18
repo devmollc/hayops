@@ -1,0 +1,64 @@
+{% load static widget_tags %}
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}HayOps{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'theme/css/styles.css' %}">
+    <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
+    <script src="https://unpkg.com/alpinejs@3.14.8/dist/cdn.min.js" defer></script>
+    <meta name="htmx-config" content='{"defaultSwapStyle":"innerHTML"}'>
+    {% if user.is_authenticated and user.is_staff %}
+    <script src="{% static 'js/notifications.js' %}" defer></script>
+    <script src="{% static 'js/multifile.js' %}" defer></script>
+    <script src="{% static 'js/staff-ui.js' %}" defer></script>
+    {% endif %}
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="h-full" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    {% if user.is_authenticated and user.is_staff %}
+    <nav class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <a href="/" class="text-xl font-bold text-blue-600">{% if current_application %}{{ current_application.name }}{% else %}HayOps{% endif %}</a>
+                    </div>
+                    <div class="hidden sm:ml-8 sm:flex sm:space-x-4">
+                        <a href="{% url 'tickets:queue' %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600">Tickets</a>
+                        <a href="{% url 'kb:article_list' %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600">Knowledge Base</a>
+                        <a href="{% url 'tickets:canned_list' %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600">Canned Responses</a>
+                        <a href="{% url 'reporting:dashboard' %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600">Reports</a>
+                        <a href="{% url 'testbench:index' %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600">Testbench</a>
+                        <a href="{% url 'webhooks:endpoint_list' %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600">Webhooks</a>
+                        <a href="{% url 'help' %}" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 hover:text-blue-600">Help</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="mute-toggle" type="button" title="Toggle notification sound" class="text-lg leading-none hover:opacity-75">🔔</button>
+                    <span class="text-sm text-gray-500">{{ user.email }}</span>
+                    <a href="{% url 'accounts:logout' %}" class="text-sm text-gray-500 hover:text-red-600">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        {% for message in messages %}
+        <div class="rounded-md p-4 mb-2 {% if message.tags == 'error' %}bg-red-50 text-red-800{% elif message.tags == 'success' %}bg-green-50 text-green-800{% else %}bg-blue-50 text-blue-800{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {% block content %}{% endblock %}
+    </main>
+    {% helpdesk_widget %}
+</body>
+</html>

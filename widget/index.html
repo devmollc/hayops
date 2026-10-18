@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HayOps Widget - Dev Test</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: 60px auto;
+      padding: 0 20px;
+    }
+    h1 { color: #1a1a1a; }
+    p { color: #555; line-height: 1.6; }
+    code {
+      background: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <h1>HayOps Widget Test Page</h1>
+  <p>
+    The helpdesk widget should appear as a floating button in the bottom-right
+    corner of this page. Click it to open the support panel.
+  </p>
+  <p>
+    This page loads the widget with sample configuration attributes.
+    Update the <code>data-api-url</code> to point to your running Django
+    server.
+  </p>
+
+  <script
+    type="module"
+    src="/src/main.ts"
+    data-app-key="test-app-key-123"
+    data-user-email="user@example.com"
+    data-user-name="Test User"
+    data-user-hash="abc123hash"
+    data-api-url="http://localhost:8000/api"
+  ></script>
+</body>
+</html>

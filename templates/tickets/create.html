@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Create Ticket - HayOps{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">Create New Ticket</h1>
+
+    <form method="post" class="card p-6 space-y-4">
+        {% csrf_token %}
+
+        <div>
+            <label for="id_subject" class="form-label">Subject</label>
+            <input type="text" name="subject" id="id_subject" class="form-input" value="{{ form.subject.value|default:'' }}" required>
+            {% if form.subject.errors %}<p class="text-sm text-red-600 mt-1">{{ form.subject.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+            <label for="id_body" class="form-label">Description</label>
+            <textarea name="body" id="id_body" rows="6" class="form-input" required>{{ form.body.value|default:"" }}</textarea>
+            {% if form.body.errors %}<p class="text-sm text-red-600 mt-1">{{ form.body.errors.0 }}</p>{% endif %}
+            {% if user.is_staff %}
+            <div class="mt-2">
+                {% include "tickets/partials/insert_tools.html" with target="id_body" %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div>
+            <label for="id_submitter_email" class="form-label">Submitter Email (optional)</label>
+            <input type="email" name="submitter_email" id="id_submitter_email" class="form-input" value="{{ form.submitter_email.value|default:'' }}" placeholder="{{ user.email }}">
+        </div>
+
+        <div class="grid grid-cols-3 gap-4">
+            <div>
+                <label for="id_queue" class="form-label">Queue</label>
+                <select name="queue" id="id_queue" class="form-input">
+                    <option value="">No Queue</option>
+                    {% for queue in form.queue.field.queryset %}
+                    <option value="{{ queue.pk }}">{{ queue.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="id_priority" class="form-label">Priority</label>
+                <select name="priority" id="id_priority" class="form-input">
+                    {% for value, label in form.fields.priority.choices %}
+                    <option value="{{ value }}" {% if value == "normal" %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="id_source_application" class="form-label">Application</label>
+                <select name="source_application" id="id_source_application" class="form-input" required>
+                    <option value="">Select an application</option>
+                    {% for app in applications %}
+                    <option value="{{ app.pk }}" {% if form.source_application.value|stringformat:"s" == app.pk|stringformat:"s" %}selected{% endif %}>{{ app.name }}</option>
+                    {% endfor %}
+                </select>
+                {% if form.source_application.errors %}<p class="text-sm text-red-600 mt-1">{{ form.source_application.errors.0 }}</p>{% endif %}
+            </div>
+        </div>
+
+        <div class="flex justify-end space-x-3">
+            <a href="{% url 'tickets:queue' %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Create Ticket</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

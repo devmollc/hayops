@@ -1,0 +1,85 @@
+{% extends "testbench/base.html" %}
+{% load core_tags %}
+{% block title %}{{ case.key }} · {{ app.branding_name }} Testbench{% endblock %}
+{% block content %}
+<div class="tb">
+  <header class="masthead">
+    <div class="masthead-inner">
+      <div>
+        <div class="eyebrow"><a href="{% url 'testbench:board' app.slug %}">{{ app.branding_name }} Test Bench</a> · {{ case.section.name }}</div>
+        <h1><span class="case-id">{{ case.key }}</span> {{ case.title }}</h1>
+        <div class="sub">
+          <span class="pri {{ case.priority|lower }}">{{ case.priority }}</span>
+          {% if case.release_focus %}<span class="flag">RELEASE FOCUS</span>{% endif %}
+          {% if not case.is_active %}<span class="flag deleted">DELETED</span>{% endif %}
+        </div>
+      </div>
+      <div class="env-block">
+        <div class="actions">
+          <a class="btn ghost sm" href="{% url 'testbench:case_edit' app.slug case.key %}">Edit case</a>
+          {% if case.is_active %}
+          <details class="pop">
+            <summary class="btn ghost sm">Delete</summary>
+            <form method="post" action="{% url 'testbench:case_delete' app.slug case.key %}" class="pop-body">
+              {% csrf_token %}
+              <p class="hint">Removes {{ case.key }} from the bench. Its history below is kept.</p>
+              <button type="submit" class="btn danger">Delete {{ case.key }}</button>
+            </form>
+          </details>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="page">
+    <div class="case">
+      <div class="case-body one">
+        <div>
+          {% if case.setup %}<p class="pre"><b>Setup:</b> {{ case.setup|urlize_blank }}</p>{% endif %}
+          {% if case.steps %}<ol class="steps">{% for step in case.steps %}<li>{{ step|urlize_blank }}</li>{% endfor %}</ol>{% endif %}
+          {% if case.expected %}<div class="expect"><span class="lbl">Expected</span>{{ case.expected|urlize_blank }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <h2 class="history-title">History</h2>
+    {% for r in results %}
+    <article class="case st-{{ r.status }}" id="result-{{ r.pk }}">
+      <div class="case-head">
+        <span class="case-id">{{ r.get_status_display }}</span>
+        <span class="case-title">{{ r.run.name }}{% if r.run.build %} <span class="muted mono">{{ r.run.build }}</span>{% endif %}</span>
+        <span class="stamp">{{ r.tester|agent_name|default:"Unknown" }} · {% if r.completed_at %}{{ r.completed_at|date:"M j, Y H:i" }}{% else %}started {{ r.created_at|time_since_short }} ago{% endif %}</span>
+      </div>
+      <div class="case-body one">
+        <div class="result">
+          {% if r.notes %}<div class="notes">{{ r.notes|urlize_blank|linebreaks }}</div>{% endif %}
+          {% if r.status != "in_progress" %}
+          <div class="actions">
+            {% if r.github_issue_url %}
+            <a href="{{ r.github_issue_url }}" target="_blank" rel="noopener">GitHub issue{% if r.github_issue_number %} #{{ r.github_issue_number }}{% endif %}</a>
+            {% elif r.issue_link %}
+            <a class="btn sm" href="{{ r.issue_link }}" target="_blank" rel="noopener">File GitHub issue</a>
+            {% elif r.status != "pass" and not app.github_repo %}
+            <span class="muted">Set this application's GitHub repo in the admin to file issues from here.</span>
+            {% endif %}
+            <details class="pop inline">
+              <summary class="btn ghost sm">Edit result</summary>
+              <form method="post" action="{% url 'testbench:result_update' app.slug r.pk %}" class="pop-body">
+                {% csrf_token %}
+                <div><label class="fld" for="notes-{{ r.pk }}">Notes</label><textarea id="notes-{{ r.pk }}" name="notes" rows="4">{{ r.notes }}</textarea></div>
+                <div><label class="fld" for="issue-{{ r.pk }}">GitHub issue URL</label><input type="url" id="issue-{{ r.pk }}" name="github_issue_url" value="{{ r.github_issue_url }}" placeholder="https://github.com/owner/repo/issues/123"></div>
+                <div><button type="submit" class="btn">Save</button></div>
+              </form>
+            </details>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </article>
+    {% empty %}
+    <p class="muted">This case has not been run yet.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

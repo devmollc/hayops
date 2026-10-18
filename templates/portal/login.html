@@ -1,0 +1,35 @@
+{% extends "portal/base.html" %}
+
+{% block title %}Sign in{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto">
+    <h1 class="text-2xl font-bold text-gray-900 mb-2">Check your tickets</h1>
+    <p class="text-gray-600 mb-2">Enter your email and we'll send you a link to sign in. No password needed.</p>
+    <p class="text-gray-600 mb-6">
+        Sign-in links only go to addresses we already have a support request from. If you've never
+        contacted us from this address, <a href="{% url 'portal:submit' %}" class="text-blue-600 hover:text-blue-800">send
+        us one first</a> &mdash; you can sign in once it's been submitted.
+    </p>
+
+    <form method="post" class="card p-6 space-y-4">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+
+        <div style="position:absolute; left:-9999px;" aria-hidden="true">
+            <label for="id_website">Website</label>
+            {{ form.website }}
+        </div>
+
+        <div>
+            <label for="id_email" class="form-label">Email</label>
+            <input type="email" name="email" id="id_email" class="form-input"
+                   value="{{ form.email.value|default:'' }}" autofocus required>
+            {% if form.email.errors %}<p class="text-sm text-red-600 mt-1">{{ form.email.errors.0 }}</p>{% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary w-full">Email me a link</button>
+    </form>
+
+</div>
+{% endblock %}

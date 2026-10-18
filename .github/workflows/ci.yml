@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, test, main]
+  pull_request:
+  # Deploy workflows call this so nothing ships without passing it first.
+  workflow_call:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: helpdesk
+          POSTGRES_USER: helpdesk
+          POSTGRES_PASSWORD: helpdesk
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_HOST: localhost
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: helpdesk
+      DATABASE_USER: helpdesk
+      DATABASE_PASSWORD: helpdesk
+      SECRET_KEY: ci-not-a-real-secret
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      # `dev` is a project extra, not a dependency-group, so plain `uv sync`
+      # skips it -- and config.settings.development imports debug_toolbar.
+      - name: Install dependencies
+        run: uv sync --locked --extra dev
+
+      - name: Lint
+        run: uv run ruff check .
+
+      # A model change without its migration passes tests locally and fails on
+      # the server, where migrate runs against a real schema.
+      - name: Check for missing migrations
+        run: uv run python manage.py makemigrations --check --dry-run
+
+      - name: Run tests
+        run: uv run pytest -q

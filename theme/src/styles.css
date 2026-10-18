@@ -1,0 +1,60 @@
+@import "tailwindcss";
+/* Markdown from the KB renders to bare <h1>/<ul>/<code>, which preflight strips
+   back to plain text. The `prose` classes the templates already use only mean
+   something once this plugin is loaded -- it ships inside the standalone CLI. */
+@plugin "@tailwindcss/typography";
+
+/* Alpine sets this on x-cloak elements until it initialises; without the rule the
+   bulk bar and delete dialog flash on every page load. */
+[x-cloak] {
+    display: none !important;
+}
+
+@layer components {
+    .btn {
+        @apply inline-flex items-center px-4 py-2 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2;
+    }
+    .btn-primary {
+        @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+    }
+    .btn-secondary {
+        @apply bg-gray-200 text-gray-700 hover:bg-gray-300 focus:ring-gray-500;
+    }
+    .btn-danger {
+        @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+    }
+    .btn-sm {
+        @apply px-3 py-1.5 text-xs;
+    }
+    .badge {
+        @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    }
+    .form-input {
+        @apply block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm;
+    }
+    .form-label {
+        @apply block text-sm font-medium text-gray-700 mb-1;
+    }
+    .card {
+        @apply bg-white rounded-lg shadow-sm border border-gray-200;
+    }
+
+    /* Chips for the file inputs (see static/js/multifile.js). Named classes rather
+       than utility strings in the JS, so they compile whether or not Tailwind's
+       content scanner looks inside static/js. */
+    .file-chips {
+        @apply flex flex-wrap gap-2 mt-2;
+    }
+    .file-chips:empty {
+        @apply hidden;
+    }
+    .file-chip {
+        @apply inline-flex items-center gap-1.5 rounded-full bg-gray-100 pl-3 pr-2 py-0.5 text-xs text-gray-700;
+    }
+    .file-chip-name {
+        @apply truncate max-w-48;
+    }
+    .file-chip-remove {
+        @apply text-base leading-none text-gray-400 rounded-full px-1 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-blue-500;
+    }
+}

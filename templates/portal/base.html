@@ -1,0 +1,48 @@
+{% load static %}
+{% with app=ticket.source_application|default:current_application %}<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50" style="--brand: {{ app.primary_color|default:'#2563eb' }};">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{{ app.branding_name }}{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
+    <link rel="stylesheet" href="{% static 'theme/css/styles.css' %}">
+    {% block analytics %}{% endblock %}
+</head>
+<body class="h-full">
+    <nav class="bg-white border-b border-gray-200">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <a href="/" class="flex items-center space-x-2">
+                    {% if app.logo %}
+                    <img src="{{ app.logo.url }}" alt="{{ app.branding_name }}" class="h-8">
+                    {% endif %}
+                    <span class="text-xl font-bold" style="color: var(--brand);">{{ app.branding_name }}</span>
+                </a>
+                <div class="flex items-center space-x-4">
+                    <a href="{% url 'kb:article_list' %}" class="text-sm text-gray-600 hover:text-gray-900">Help Center</a>
+                    {% if user.is_authenticated and not user.is_staff %}
+                    <a href="{% url 'portal:ticket_list' %}" class="text-sm text-gray-600 hover:text-gray-900">My tickets</a>
+                    <form method="post" action="{% url 'portal:logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="text-sm text-gray-600 hover:text-gray-900">Sign out</button>
+                    </form>
+                    {% else %}
+                    <a href="{% url 'portal:login' %}" class="text-sm text-gray-600 hover:text-gray-900">Sign in</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-sm text-gray-400">
+        &copy; {% now "Y" %} {{ app.branding_name }}
+    </footer>
+    <script src="{% static 'js/multifile.js' %}" defer></script>
+</body>
+</html>
+{% endwith %}

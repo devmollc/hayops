@@ -1,0 +1,493 @@
+:host {
+  all: initial;
+  /* Host apps set these via data-offset-bottom / data-offset-right when the
+     default corner would sit on top of their own fixed furniture (cookie bar,
+     sticky action bar). Everything that floats reads them. */
+  --hd-offset-bottom: 20px;
+  --hd-offset-right: 20px;
+  --hd-primary: #2563eb;
+  --hd-primary-hover: color-mix(in srgb, var(--hd-primary) 85%, black);
+  --hd-primary-focus-ring: color-mix(in srgb, var(--hd-primary) 15%, transparent);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1a1a1a;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Floating launcher button */
+.hw-launcher {
+  position: fixed;
+  bottom: var(--hd-offset-bottom);
+  right: var(--hd-offset-right);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--hd-primary);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.2s;
+  z-index: 999999;
+}
+
+.hw-launcher:hover {
+  background: var(--hd-primary-hover);
+  transform: scale(1.05);
+}
+
+.hw-launcher svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+/* Panel container */
+.hw-panel {
+  position: fixed;
+  bottom: calc(var(--hd-offset-bottom) + 68px);
+  right: var(--hd-offset-right);
+  width: 380px;
+  max-height: 520px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 999998;
+  animation: hw-slide-up 0.2s ease-out;
+}
+
+@keyframes hw-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Panel header */
+.hw-header {
+  background: var(--hd-primary);
+  color: #fff;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.hw-header-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.hw-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.hw-header button {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  font-size: 14px;
+  opacity: 0.85;
+  transition: opacity 0.15s;
+}
+
+.hw-header button:hover {
+  opacity: 1;
+}
+
+/* Content area */
+.hw-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* Ticket list */
+.hw-ticket-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.hw-ticket-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.hw-ticket-item:hover {
+  background: #f3f4f6;
+}
+
+.hw-ticket-subject {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.hw-ticket-meta {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.hw-status-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 500;
+  background: #dbeafe;
+  color: var(--hd-primary-hover);
+}
+
+/* Ticket detail */
+.hw-detail {
+  padding: 16px;
+}
+
+.hw-detail-subject {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.hw-detail-meta {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.hw-detail-body {
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  white-space: pre-wrap;
+}
+
+.hw-comments-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.hw-comment {
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: #f3f4f6;
+}
+
+.hw-comment.hw-agent {
+  background: #eff6ff;
+}
+
+.hw-comment-author {
+  font-weight: 500;
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.hw-comment-body {
+  white-space: pre-wrap;
+}
+
+.hw-detail-body a,
+.hw-comment-body a {
+  color: var(--hd-primary);
+  /* URLs have no spaces to wrap on and the panel is ~320px wide. */
+  overflow-wrap: anywhere;
+}
+
+.hw-comment-date {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+/* Reply / create form */
+.hw-form {
+  padding: 16px;
+}
+
+.hw-form label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  color: #374151;
+}
+
+.hw-form input,
+.hw-form textarea {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  margin-bottom: 12px;
+  resize: vertical;
+  transition: border-color 0.15s;
+}
+
+.hw-form input:focus,
+.hw-form textarea:focus {
+  outline: none;
+  border-color: var(--hd-primary);
+  box-shadow: 0 0 0 2px var(--hd-primary-focus-ring);
+}
+
+.hw-form textarea {
+  min-height: 80px;
+}
+
+.hw-reply-form {
+  padding: 12px 16px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.hw-reply-form textarea {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: none;
+  min-height: 36px;
+  max-height: 80px;
+}
+
+.hw-reply-form textarea:focus {
+  outline: none;
+  border-color: var(--hd-primary);
+  box-shadow: 0 0 0 2px var(--hd-primary-focus-ring);
+}
+
+.hw-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.hw-btn-primary {
+  background: var(--hd-primary);
+  color: #fff;
+}
+
+.hw-btn-primary:hover {
+  background: var(--hd-primary-hover);
+}
+
+.hw-btn-primary:disabled {
+  background: #93c5fd;
+  cursor: not-allowed;
+}
+
+.hw-btn-block {
+  width: 100%;
+}
+
+/* Empty / loading states */
+.hw-empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.hw-loading {
+  padding: 32px 16px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.hw-error {
+  padding: 12px 16px;
+  color: #dc2626;
+  background: #fef2f2;
+  font-size: 13px;
+}
+
+/* Screenshot button */
+.hw-screenshot-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 12px;
+}
+
+.hw-screenshot-btn:hover {
+  background: #e5e7eb;
+}
+
+.hw-screenshot-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.hw-screenshot-btn svg {
+  flex-shrink: 0;
+}
+
+/* Screenshot preview */
+.hw-screenshot-preview {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.hw-screenshot-preview img {
+  max-height: 120px;
+  max-width: 100%;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  display: block;
+}
+
+.hw-screenshot-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #dc2626;
+  color: #fff;
+  border: 2px solid #fff;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* Annotation modal.
+
+   A <dialog> in the top layer, not a z-index overlay: the host page below it
+   goes inert, so the screenshot being annotated can never be mistaken for the
+   live app. Full-bleed because markerjs's popup mode measures itself against
+   the viewport -- an inset dialog would have its editor spill outside. */
+.hw-annotate-dialog {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  background: #1a1a1a;
+}
+
+.hw-annotate-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* markerjs renders its own copy of the screenshot. This one is kept in the
+   layout only so markerjs can read an aspect ratio off it, and never paints --
+   two visible copies is the bug this replaced. */
+.hw-annotate-source {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  max-width: 100%;
+  max-height: 100%;
+  visibility: hidden;
+}
+
+.hw-annotate-toolbar {
+  position: relative;
+  /* Over markerjs's own viewport-wide scrim, which sits at 1000000. */
+  z-index: 1000001;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 56px;
+  padding: 0 16px;
+  background: #111;
+}
+
+.hw-annotate-toolbar span {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.hw-annotate-toolbar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.hw-annotate-toolbar .hw-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.hw-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  background: #fff;
+  color: #374151;
+  transition: background 0.15s;
+}
+
+.hw-btn-secondary:hover {
+  background: #f3f4f6;
+}

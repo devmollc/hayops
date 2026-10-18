@@ -1,0 +1,48 @@
+<div class="card p-6" x-data="{ commentType: '{{ comment_form.comment_type.value|default:'public' }}' }">
+    <h3 class="text-sm font-semibold text-gray-700 mb-3">Reply</h3>
+
+    {% if user.is_staff %}
+    <!-- Comment type toggle -->
+    <div class="flex space-x-2 mb-3">
+        <button @click="commentType = 'public'"
+                :class="commentType === 'public' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'"
+                class="px-3 py-1 rounded-md text-sm font-medium">
+            Public Reply
+        </button>
+        <button @click="commentType = 'internal'"
+                :class="commentType === 'internal' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-600'"
+                class="px-3 py-1 rounded-md text-sm font-medium">
+            Internal Note
+        </button>
+    </div>
+
+    {% include "tickets/partials/insert_tools.html" with target="comment-body" queue_id=ticket.queue_id %}
+    {% endif %}
+
+    <form method="post"
+          action="{% url 'tickets:add_comment' ticket.pk %}"
+          hx-post="{% url 'tickets:add_comment' ticket.pk %}"
+          hx-target="#timeline"
+          hx-swap="beforeend"
+          enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="comment_type" :value="commentType">
+        {% if comment_form.body.errors %}
+        <p class="text-sm text-red-600 mb-1">{{ comment_form.body.errors.0 }}</p>
+        {% endif %}
+        <textarea name="body" id="comment-body" rows="4"
+                  class="form-input mb-3"
+                  :class="commentType === 'internal' ? 'bg-yellow-50 border-yellow-300' : ''"
+                  placeholder="Write a reply..." required>{{ comment_form.body.value|default:"" }}</textarea>
+        <div class="flex items-center justify-between">
+            <input type="file" name="files" multiple class="text-sm text-gray-500">
+            <button type="submit" class="btn btn-primary">
+                {% if user.is_staff %}
+                <span x-text="commentType === 'internal' ? 'Add Note' : 'Send Reply'"></span>
+                {% else %}
+                Send Reply
+                {% endif %}
+            </button>
+        </div>
+    </form>
+</div>

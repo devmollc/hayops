@@ -1,0 +1,38 @@
+{% extends base_template|default:"base.html" %}
+{% load kb_tags %}
+
+{% block title %}{{ article.title }} - Knowledge Base{% endblock %}
+
+{% block analytics %}{% include "includes/umami.html" %}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'kb:article_list' %}" class="text-sm text-blue-600 hover:underline">&larr; Back to Knowledge Base</a>
+</div>
+
+<article class="rounded-lg border border-gray-200 bg-white p-6">
+    <header class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">{{ article.title }}</h1>
+        <div class="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+            <span>{{ article.category.name }}</span>
+            <span>&middot;</span>
+            <span>{{ article.created_at|date:"M d, Y" }}</span>
+            {% if article.author %}
+            <span>&middot;</span>
+            <span>{{ article.author.email }}</span>
+            {% endif %}
+        </div>
+    </header>
+
+    <div class="prose max-w-none">
+        {{ article.body|render_markdown }}
+    </div>
+</article>
+
+{% if user.is_authenticated and user.is_staff %}
+<div class="mt-4 flex space-x-3">
+    <a href="{% url 'kb:article_edit' slug=article.slug %}" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Edit</a>
+    <a href="{% url 'kb:article_delete' slug=article.slug %}" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-red-600 ring-1 ring-inset ring-red-300 hover:bg-red-50">Delete</a>
+</div>
+{% endif %}
+{% endblock %}

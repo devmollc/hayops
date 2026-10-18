@@ -1,0 +1,35 @@
+{% extends "portal/base.html" %}
+{% load core_tags %}
+
+{% block title %}My tickets{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">My tickets</h1>
+    <a href="{% url 'portal:submit' %}" class="btn btn-primary btn-sm">New request</a>
+</div>
+
+{% if not open_tickets and not closed_tickets %}
+<div class="card p-8 text-center text-gray-500">
+    You don't have any support tickets yet.
+</div>
+{% endif %}
+
+{% if open_tickets %}
+<h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">Open</h2>
+<div class="space-y-3 mb-8">
+    {% for ticket in open_tickets %}
+    {% include "portal/_ticket_row.html" %}
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if closed_tickets %}
+<h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">Closed</h2>
+<div class="space-y-3">
+    {% for ticket in closed_tickets %}
+    {% include "portal/_ticket_row.html" %}
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

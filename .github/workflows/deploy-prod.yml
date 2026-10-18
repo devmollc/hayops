@@ -1,0 +1,109 @@
+name: Deploy to Production
+
+# Merging to main does not ship. Pushing a version tag does, so main stays
+# mergeable and the tag names exactly what is running in production.
+on:
+  push:
+    tags: ["v*"]
+
+env:
+  APP_NAME: helpdesk
+  REGISTRY: ghcr.io
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # Deploy target lives in repository variables, not here: PROD_DEPLOY_COMMAND is
+      # the shell command run on the server to pull and restart (see
+      # deploy/README.md). Fail loudly when it is unset -- an empty command would
+      # leave the old container running and the health check would pass on it.
+      - name: Check deploy configuration
+        run: |
+          if [ -z "${{ vars.PROD_DEPLOY_COMMAND }}" ]; then
+            echo "::error::Set the PROD_DEPLOY_COMMAND repository variable (see deploy/README.md)"
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # A tag can point anywhere. Production only ever runs what is on main.
+      - name: Verify tag is on main
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          git fetch origin main --depth=100
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "Tag $TAG is not an ancestor of origin/main. Merge to main before releasing."
+            exit 1
+          fi
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set image name
+        run: echo "IMAGE=${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.APP_NAME }}" >> $GITHUB_ENV
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ github.ref_name }}
+            ${{ env.IMAGE }}:latest
+
+      # No migrate step here -- see the note in deploy-test.yml.
+      - name: Deploy to server
+        env:
+          TAG: ${{ github.ref_name }}
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ vars.SERVER_HOST }}
+          username: ${{ vars.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          envs: TAG
+          script: |
+            set -e
+            # Authenticate the pull ourselves. Another repo deploying to the same
+            # server logs in with its own workflow-scoped GITHUB_TOKEN, which
+            # GitHub revokes when that run ends -- and that login overwrites the
+            # server's stored credential, so ambient state cannot be relied on.
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+            # APP_VERSION is exported for the deploy command, so compose can pin
+            # this exact tag instead of :latest and what is running can be
+            # identified from the registry.
+            export APP_VERSION="$TAG"
+            ${{ vars.PROD_DEPLOY_COMMAND }}
+
+      - name: Health check
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ vars.SERVER_HOST }}
+          username: ${{ vars.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -e
+            for i in $(seq 1 20); do
+              code=$(docker exec helpdesk-prod-app curl -s -o /dev/null -w '%{http_code}' \
+                -H 'Host: localhost' -H 'X-Forwarded-Proto: https' \
+                http://localhost:8000/ht/ || true)
+              if [ "$code" = "200" ]; then echo "healthy"; exit 0; fi
+              echo "attempt $i: $code"; sleep 3
+            done
+            echo "prod app did not become healthy"
+            docker logs --tail 50 helpdesk-prod-app
+            exit 1

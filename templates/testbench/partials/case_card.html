@@ -1,0 +1,63 @@
+{% load core_tags %}
+{% with r=case.latest %}
+<article class="case{% if case.release_focus %} is-focus{% endif %}{% if r %} st-{{ r.status }}{% endif %}" id="case-{{ case.key }}">
+  <div class="case-head">
+    <a class="case-id" href="{% url 'testbench:case_detail' app.slug case.key %}">{{ case.key }}</a>
+    <span class="case-title">{{ case.title }}</span>
+    <span class="pri {{ case.priority|lower }}">{{ case.priority }}</span>
+    {% if case.release_focus %}<span class="flag">RELEASE FOCUS</span>{% endif %}
+  </div>
+  <div class="case-body">
+    <div>
+      {% if case.setup %}<p class="pre"><b>Setup:</b> {{ case.setup|urlize_blank }}</p>{% endif %}
+      {% if case.steps %}<ol class="steps">{% for step in case.steps %}<li>{{ step|urlize_blank }}</li>{% endfor %}</ol>{% endif %}
+      {% if case.expected %}<div class="expect"><span class="lbl">Expected</span>{{ case.expected|urlize_blank }}</div>{% endif %}
+    </div>
+
+    <div class="result">
+      {% if error %}<p class="err" role="alert">{{ error }}</p>{% endif %}
+      {% if r.status == "in_progress" %}
+      <div class="stamp working">{% if r.tester_id == user.pk %}You{% else %}{{ r.tester|agent_name|default:"Someone" }}{% endif %} · working on it · {{ r.created_at|time_since_short }}</div>
+      {% elif r %}
+      <div class="stamp">{{ r.tester|agent_name|default:"Unknown" }} · {{ r.get_status_display }} · {{ r.completed_at|date:"M j, H:i" }}</div>
+      {% comment %}Left as plain text: truncating first would linkify a cut-off URL. The
+      full notes are linkified on the case's history page.{% endcomment %}
+      {% if r.notes %}<p class="notes-snippet">{{ r.notes|truncatechars:160 }}</p>{% endif %}
+      {% else %}
+      <div class="stamp">Not run{% if run %} in this run{% endif %}</div>
+      {% endif %}
+
+      {% if editable %}
+        {% if r.status == "in_progress" and r.tester_id != user.pk %}
+        <p class="hint">Release the claim to take this case over.</p>
+        {% else %}
+        {% url 'testbench:case_action' app.slug case.key 'record' as record_url %}
+        <form method="post" action="{{ record_url }}"
+              hx-post="{{ record_url }}" hx-target="closest .case" hx-swap="outerHTML">
+          {% csrf_token %}
+          <div class="seg" role="group" aria-label="Record a result for {{ case.key }}">
+            <button type="submit" name="status" value="pass" class="v-pass{% if r.status == 'pass' %} on{% endif %}">Pass</button>
+            <button type="submit" name="status" value="fail" class="v-fail{% if r.status == 'fail' %} on{% endif %}">Fail</button>
+            <button type="submit" name="status" value="blocked" class="v-blocked{% if r.status == 'blocked' %} on{% endif %}">Blocked</button>
+          </div>
+          <textarea name="notes" rows="2" placeholder="Notes — what you saw." aria-label="Notes for {{ case.key }}"></textarea>
+        </form>
+        {% endif %}
+      {% endif %}
+
+      <div class="actions">
+        {% if editable %}
+          {% if r.status == "in_progress" %}
+          <button type="button" class="btn ghost sm" hx-post="{% url 'testbench:case_action' app.slug case.key 'release' %}" hx-target="closest .case" hx-swap="outerHTML">Release</button>
+          {% else %}
+          <button type="button" class="btn ghost sm" hx-post="{% url 'testbench:case_action' app.slug case.key 'claim' %}" hx-target="closest .case" hx-swap="outerHTML">Claim</button>
+          {% endif %}
+        {% endif %}
+        {% if r.github_issue_url %}<a href="{{ r.github_issue_url }}" target="_blank" rel="noopener">Issue{% if r.github_issue_number %} #{{ r.github_issue_number }}{% endif %}</a>{% endif %}
+        <a href="{% url 'testbench:case_detail' app.slug case.key %}">History ({{ case.result_count }})</a>
+        <a href="{% url 'testbench:case_edit' app.slug case.key %}">Edit</a>
+      </div>
+    </div>
+  </div>
+</article>
+{% endwith %}

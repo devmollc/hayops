@@ -1,0 +1,56 @@
+# Example production stack: app + background worker + Postgres.
+# Copy next to a filled-in .env (see .env.example) and put a TLS-terminating
+# reverse proxy (Traefik, Caddy, nginx, a CDN) in front of port 8000.
+#
+#   docker compose -f compose.example.yml up -d
+#
+# The app container migrates on start (see the Dockerfile CMD); the worker does
+# not, so start or update the app first.
+
+services:
+  app:
+    image: ghcr.io/OWNER/helpdesk:${APP_VERSION:-latest}
+    env_file: .env
+    environment:
+      DATABASE_HOST: postgres
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      # Both headers are needed: Host must be in ALLOWED_HOSTS, and without
+      # X-Forwarded-Proto SECURE_SSL_REDIRECT bounces the probe to https.
+      test: ["CMD", "curl", "-sf", "-o", "/dev/null", "-H", "Host: localhost", "-H", "X-Forwarded-Proto: https", "http://localhost:8000/ht/"]
+      interval: 30s
+      start_period: 60s
+    restart: unless-stopped
+
+  # Sends all email, processes inbound mail and delivers webhooks. Without it
+  # tickets are created but nobody is ever notified.
+  worker:
+    image: ghcr.io/OWNER/helpdesk:${APP_VERSION:-latest}
+    command: ["python", "manage.py", "procrastinate", "worker"]
+    env_file: .env
+    environment:
+      DATABASE_HOST: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 5s
+    restart: unless-stopped
+
+volumes:
+  pgdata:

@@ -1,0 +1,16 @@
+{% extends "testbench/base.html" %}
+{% block title %}{{ app.branding_name }} · Testbench{% endblock %}
+{% block content %}
+{% comment %}Polls for changes by other testers, and refreshes at once after this tester's own
+card actions (they answer with HX-Trigger: tb-changed). The view answers 204 while the marker is
+unchanged, and tbBusy() (static/js/testbench.js) holds both while a form is in use.
+hx-disinherit keeps the card buttons from inheriting this element's swap settings.{% endcomment %}
+<div class="tb" id="tb-board"
+     hx-get="{{ request.get_full_path }}"
+     hx-trigger="every 5s [!tbBusy()], tb-changed from:body [!tbBusy()]"
+     hx-include="#tb-marker"
+     hx-swap="innerHTML"
+     hx-disinherit="*">
+  {% include "testbench/partials/board.html" %}
+</div>
+{% endblock %}

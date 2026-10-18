@@ -1,0 +1,17 @@
+{% comment %}Attachment link list. Include with `attachments=<queryset>`. Shared by the staff
+detail page, the portal and the magic-link view so the markup stays in one place.{% endcomment %}
+{% for attachment in attachments %}
+{% if forloop.first %}<div class="mt-3 space-y-1">{% endif %}
+{% comment %}Images, PDFs and plain text open in a new tab; everything else keeps the
+download-forcing default, because uploads are attacker-controlled.{% endcomment %}
+<a href="{% if attachment.view_url %}{{ attachment.view_url }}{% else %}{{ attachment.file.url }}{% endif %}"
+   {% if attachment.view_url %}target="_blank" rel="noopener"{% endif %}
+   class="flex items-center text-sm text-blue-600 hover:text-blue-800">
+    <svg class="w-4 h-4 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+    </svg>
+    {{ attachment.filename }} ({{ attachment.size_bytes|filesizeformat }})
+    {% if attachment.view_url %}<span class="sr-only">(opens in a new tab)</span>{% endif %}
+</a>
+{% if forloop.last %}</div>{% endif %}
+{% endfor %}

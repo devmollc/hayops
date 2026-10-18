@@ -1,0 +1,8 @@
+{% extends "inbound_email/base_email.html" %}
+{% block body %}
+<p>Hello,</p>
+<p>The status of your support ticket <strong>{{ ref }}</strong> has been updated.</p>
+<p><strong>Subject:</strong> {{ ticket.subject }}<br>
+<strong>New Status:</strong> {{ ticket.get_status_display }}</p>
+<p>If you have any questions, reply to this email.</p>
+{% endblock %}

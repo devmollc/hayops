@@ -1,0 +1,49 @@
+{% extends "testbench/base.html" %}
+{% block title %}API tokens · Testbench{% endblock %}
+{% block content %}
+<div class="tb">
+  <header class="masthead">
+    <div class="masthead-inner">
+      <div>
+        <div class="eyebrow"><a href="{% url 'testbench:index' %}">Manual QC</a></div>
+        <h1>API tokens</h1>
+        <div class="sub">A token acts as you. Give one to Claude or a script to read and edit test suites through <code>/api/testbench/</code> — see docs/TESTBENCH.md. Delete a token to revoke it.</div>
+      </div>
+    </div>
+  </header>
+  <div class="page narrow">
+    {% if raw_token %}
+    <div class="panel panel-pad">
+      <h3>New token — copy it now</h3>
+      <p class="token">{{ raw_token }}</p>
+      <p class="hint">This is the only time it is shown. Check it works:</p>
+      <pre class="snippet">curl -H "Authorization: Bearer {{ raw_token }}" {{ api_root }}</pre>
+    </div>
+    {% endif %}
+
+    <form method="post" class="panel panel-pad">
+      {% csrf_token %}
+      <h3>Create a token</h3>
+      <label class="fld" for="token-name">Name</label>
+      <input type="text" id="token-name" name="name" maxlength="100" placeholder="Claude on my laptop">
+      <div class="actions"><button type="submit" class="btn">Create token</button></div>
+    </form>
+
+    <div class="panel panel-pad">
+      <h3>Your tokens</h3>
+      {% for token in tokens %}
+      <div class="token-row">
+        <span class="nm">{{ token.name }}</span>
+        <span class="muted">created {{ token.created_at|date:"M j, Y" }} · {% if token.last_used_at %}used {{ token.last_used_at|timesince }} ago{% else %}never used{% endif %}</span>
+        <form method="post" action="{% url 'testbench:token_delete' token.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn ghost sm">Delete</button>
+        </form>
+      </div>
+      {% empty %}
+      <p class="muted">No tokens yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

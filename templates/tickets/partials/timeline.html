@@ -1,0 +1,4 @@
+<input type="hidden" id="timeline-marker" name="last_event" value="{{ last_event_id }}">
+{% for item in timeline %}
+{% include "tickets/partials/timeline_item.html" with item=item %}
+{% endfor %}

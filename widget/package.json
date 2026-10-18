@@ -1,0 +1,20 @@
+{
+  "name": "hayops-widget",
+  "version": "1.2.5",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && mkdir -p dist/vendor && cp node_modules/html2canvas-pro/dist/html2canvas-pro.min.js node_modules/markerjs2/markerjs2.js node_modules/markerjs2/markerjs2.js.map dist/vendor/",
+    "preview": "vite preview",
+    "test": "node --test 'src/**/*.test.js'"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  },
+  "dependencies": {
+    "html2canvas-pro": "1.5.11",
+    "markerjs2": "2.32.7"
+  }
+}

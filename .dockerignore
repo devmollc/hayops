@@ -1,0 +1,13 @@
+.venv
+.env
+.git
+.github
+.ruff_cache
+.pytest_cache
+.django_tailwind_cli
+__pycache__
+*.pyc
+node_modules
+deploy
+media
+.claude

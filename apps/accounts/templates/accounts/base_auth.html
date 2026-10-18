@@ -1,0 +1,386 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}HayOps{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Albert Sans', system-ui, -apple-system, sans-serif;
+            color: #18181b;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── Mobile brand header ── */
+        .auth-mobile-header {
+            background: linear-gradient(160deg, #0b0f1a, #131b2e);
+            padding: 1.25rem 1.5rem;
+        }
+        .auth-mobile-logo {
+            font-family: 'Instrument Serif', Georgia, serif;
+            font-style: italic;
+            font-size: 1.375rem;
+            color: #f1f5f9;
+            text-decoration: none;
+        }
+        @media (min-width: 1024px) {
+            .auth-mobile-header { display: none; }
+        }
+
+        /* ── Split layout ── */
+        .auth-layout {
+            flex: 1;
+            display: flex;
+        }
+
+        /* ── Brand panel (desktop) ── */
+        .auth-brand {
+            display: none;
+            width: 42%;
+            background: linear-gradient(160deg, #0b0f1a 0%, #141c30 50%, #0d1321 100%);
+            position: relative;
+            overflow: hidden;
+            padding: 3.5rem;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .auth-brand::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 28px 28px;
+        }
+        .auth-brand::after {
+            content: '';
+            position: absolute;
+            top: -15%;
+            right: -25%;
+            width: 65%;
+            height: 65%;
+            background: radial-gradient(circle, rgba(59,130,246,0.07) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        @media (min-width: 1024px) {
+            .auth-brand { display: flex; }
+        }
+
+        .auth-brand-content {
+            position: relative;
+            z-index: 1;
+            animation: authFadeLeft 0.7s ease-out both;
+        }
+        .auth-logo {
+            font-family: 'Instrument Serif', Georgia, serif;
+            font-style: italic;
+            font-size: 2.25rem;
+            color: #f1f5f9;
+            letter-spacing: -0.02em;
+            line-height: 1;
+        }
+        .auth-divider {
+            width: 44px;
+            height: 2px;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            margin: 2rem 0;
+            border-radius: 1px;
+        }
+        .auth-tagline {
+            font-family: 'Instrument Serif', Georgia, serif;
+            font-size: 2.5rem;
+            line-height: 1.15;
+            color: rgba(241,245,249,0.85);
+            letter-spacing: -0.025em;
+            margin-bottom: 2.5rem;
+        }
+        .auth-features {
+            display: flex;
+            flex-direction: column;
+            gap: 0.875rem;
+        }
+        .auth-feature {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.875rem;
+            color: rgba(148,163,184,0.75);
+            letter-spacing: 0.01em;
+        }
+        .auth-feature-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #3b82f6;
+            flex-shrink: 0;
+        }
+
+        /* ── Form panel ── */
+        .auth-panel {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2.5rem 1.5rem;
+            background: #fafaf8;
+            min-height: 0;
+        }
+        @media (min-width: 1024px) {
+            .auth-panel { padding: 3rem; }
+        }
+        .auth-form-wrapper {
+            width: 100%;
+            max-width: 400px;
+            animation: authFadeUp 0.5s ease-out both;
+        }
+
+        /* ── Messages ── */
+        .auth-messages {
+            margin-bottom: 1.5rem;
+        }
+        .auth-message {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            margin-bottom: 0.5rem;
+        }
+        .auth-message-success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+        .auth-message-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+        .auth-message-info {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
+        }
+
+        /* ── Typography ── */
+        .auth-heading {
+            font-family: 'Instrument Serif', Georgia, serif;
+            font-size: 2rem;
+            font-weight: 400;
+            color: #18181b;
+            letter-spacing: -0.025em;
+            line-height: 1.2;
+            margin-bottom: 0.5rem;
+        }
+        .auth-subheading {
+            font-size: 0.9375rem;
+            color: #71717a;
+            margin-bottom: 2rem;
+            line-height: 1.5;
+        }
+
+        /* ── Form elements ── */
+        .auth-field {
+            margin-bottom: 1.25rem;
+        }
+        .auth-label {
+            display: block;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: #52525b;
+            margin-bottom: 0.375rem;
+            letter-spacing: 0.01em;
+        }
+        .auth-input {
+            width: 100%;
+            padding: 0.6875rem 0.875rem;
+            border: 1.5px solid #d4d4d8;
+            border-radius: 8px;
+            font-family: 'Albert Sans', system-ui, sans-serif;
+            font-size: 0.9375rem;
+            color: #18181b;
+            background: #ffffff;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .auth-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+        .auth-input::placeholder {
+            color: #a1a1aa;
+        }
+        .auth-field.has-error .auth-input {
+            border-color: #ef4444;
+        }
+        .auth-field.has-error .auth-input:focus {
+            box-shadow: 0 0 0 3px rgba(239,68,68,0.1);
+        }
+        .auth-field-error {
+            font-size: 0.8125rem;
+            color: #dc2626;
+            margin-top: 0.375rem;
+            line-height: 1.4;
+        }
+        .auth-field-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 0.375rem;
+        }
+        .auth-help-text {
+            font-size: 0.75rem;
+            color: #a1a1aa;
+            margin-top: 0.375rem;
+            line-height: 1.5;
+        }
+        .auth-help-text ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* ── Error banner ── */
+        .auth-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+            color: #991b1b;
+            line-height: 1.5;
+        }
+
+        /* ── Buttons ── */
+        .auth-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Albert Sans', system-ui, sans-serif;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 0.01em;
+            text-decoration: none;
+        }
+        .auth-btn-primary {
+            background: #2563eb;
+            color: #ffffff;
+        }
+        .auth-btn-primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+        }
+        .auth-btn-primary:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        /* ── Links ── */
+        .auth-link {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.15s ease;
+        }
+        .auth-link:hover {
+            color: #1d4ed8;
+        }
+
+        /* ── Footer ── */
+        .auth-footer {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: #71717a;
+        }
+        .auth-footer a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .auth-footer a:hover {
+            color: #1d4ed8;
+        }
+
+        /* ── Status icon ── */
+        .auth-status-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.25rem;
+        }
+        .auth-status-icon-info {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+        .auth-status-icon-success {
+            background: #f0fdf4;
+            color: #16a34a;
+        }
+
+        /* ── Animations ── */
+        @keyframes authFadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes authFadeLeft {
+            from { opacity: 0; transform: translateX(-16px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-mobile-header">
+        <span class="auth-mobile-logo">HayOps</span>
+    </div>
+
+    <div class="auth-layout">
+        <aside class="auth-brand">
+            <div class="auth-brand-content">
+                <div class="auth-logo">HayOps</div>
+                <div class="auth-divider"></div>
+                <p class="auth-tagline">Support,<br>simplified.</p>
+                <div class="auth-features">
+                    <div class="auth-feature"><span class="auth-feature-dot"></span>Ticket management</div>
+                    <div class="auth-feature"><span class="auth-feature-dot"></span>Knowledge base</div>
+                    <div class="auth-feature"><span class="auth-feature-dot"></span>Team collaboration</div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="auth-panel">
+            <div class="auth-form-wrapper">
+                {% if messages %}
+                <div class="auth-messages">
+                    {% for message in messages %}
+                    <div class="auth-message {% if message.tags == 'error' %}auth-message-error{% elif message.tags == 'success' %}auth-message-success{% else %}auth-message-info{% endif %}">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% block auth_content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+</body>
+</html>

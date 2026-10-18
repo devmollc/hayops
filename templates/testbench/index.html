@@ -1,0 +1,27 @@
+{% extends "testbench/base.html" %}
+{% block title %}Testbench{% endblock %}
+{% block content %}
+<div class="tb">
+  <header class="masthead">
+    <div class="masthead-inner">
+      <div>
+        <div class="eyebrow">Manual QC</div>
+        <h1>Test Bench</h1>
+        <div class="sub">One shared script per application. Claim a case, record what you saw, and every result stays in that case's history.</div>
+      </div>
+      <div class="env-block"><a class="btn ghost sm" href="{% url 'testbench:tokens' %}">API tokens</a></div>
+    </div>
+  </header>
+  <div class="page">
+    {% for app in apps %}
+    <a class="panel panel-pad app-row" href="{% url 'testbench:board' app.slug %}">
+      <span class="nm">{{ app.branding_name }}</span>
+      <span class="muted">{{ app.case_count }} case{{ app.case_count|pluralize }}</span>
+      <span class="muted">{% if app.open_run %}{{ app.open_run.name }} · {{ app.done }}/{{ app.case_count }} done{% else %}No run open{% endif %}</span>
+    </a>
+    {% empty %}
+    <p class="muted">No active applications.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

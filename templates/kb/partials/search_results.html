@@ -1,0 +1,26 @@
+{% if articles %}
+<ul class="divide-y divide-gray-100">
+    {% for article in articles %}
+    <li class="flex items-center justify-between py-2 px-1">
+        <div>
+            <p class="text-sm font-medium text-gray-900">{{ article.title }}</p>
+            <p class="text-xs text-gray-500">{{ article.category.name }}</p>
+        </div>
+        {% comment %}
+        Comments are sent as plain text (|linebreaks), so insert a bare URL --
+        Markdown link syntax would reach the customer verbatim.
+        ponytail: links to the host the agent is on, i.e. the admin domain.
+        Point it at the ticket's source_application.portal_domain if customers
+        start reporting the link asks them to sign in.
+        {% endcomment %}
+        <button type="button"
+                class="kb-insert-btn text-xs text-blue-600 hover:underline"
+                data-insert-link="{{ article.title }}: {{ request.scheme }}://{{ request.get_host }}{% url 'kb:article_detail' slug=article.slug %}">
+            Insert Link
+        </button>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p class="py-2 text-sm text-gray-500">{% if search_query %}No articles found for "{{ search_query }}".{% else %}No articles available.{% endif %}</p>
+{% endif %}

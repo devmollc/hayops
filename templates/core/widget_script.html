@@ -1,0 +1,13 @@
+{% if widget_enabled %}
+<script
+  src="{{ widget_js_url }}"
+  data-app-key="{{ api_key }}"
+  {% if user_email %}
+  data-user-email="{{ user_email }}"
+  data-user-name="{{ user_name }}"
+  data-user-hash="{{ user_hash }}"
+  {% endif %}
+  data-api-url="{{ api_url }}"
+  defer
+></script>
+{% endif %}
