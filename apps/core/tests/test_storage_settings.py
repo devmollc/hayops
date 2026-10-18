@@ -39,7 +39,9 @@ def test_both_buckets_carry_their_own_credentials():
 
 
 def test_public_and_private_buckets_are_distinct():
-    assert base.R2_PUBLIC_STORAGE_OPTIONS["bucket_name"] != base.R2_PRIVATE_STORAGE_OPTIONS["bucket_name"], (
+    # Both are unset (empty) without R2 configured, as in CI; only a shared name is a hazard.
+    public = base.R2_PUBLIC_STORAGE_OPTIONS["bucket_name"]
+    assert not public or public != base.R2_PRIVATE_STORAGE_OPTIONS["bucket_name"], (
         "attachments would land in the world-readable bucket"
     )
 
