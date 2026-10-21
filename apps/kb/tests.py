@@ -107,3 +107,23 @@ def test_the_editor_links_to_a_cheatsheet_the_help_page_actually_has(client, sta
 
     assert f'href="{reverse("help")}#markdown"' in editor
     assert 'id="markdown"' in help_page
+
+
+def test_the_list_filters_by_application_and_keeps_global_articles(category, client):
+    from apps.core.models import SourceApplication
+
+    alpha = SourceApplication.objects.create(name="Alpha", slug="alpha", allowed_domains=[])
+    beta = SourceApplication.objects.create(name="Beta", slug="beta", allowed_domains=[])
+    alpha_article = make(category, "Alpha article", is_published=True, source_application=alpha)
+    make(category, "Beta article", is_published=True, source_application=beta)
+    make(category, "Global article", is_published=True)
+
+    body = client.get(reverse("kb:article_list"), {"app": "alpha"}, HTTP_HOST="testserver").content.decode()
+    assert "Alpha article" in body and "Global article" in body
+    assert "Beta article" not in body
+
+    body = client.get(reverse("kb:article_list"), HTTP_HOST="testserver").content.decode()
+    assert "Beta article" in body
+
+    detail = client.get(reverse("kb:article_detail", args=[alpha_article.slug]), HTTP_HOST="testserver")
+    assert "/kb/?app=alpha" in detail.content.decode()

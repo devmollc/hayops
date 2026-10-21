@@ -7,7 +7,7 @@
 
 {% block content %}
 <div class="mb-4">
-    <a href="{% url 'kb:article_list' %}" class="text-sm text-blue-600 hover:underline">&larr; Back to Knowledge Base</a>
+    <a href="{% url 'kb:article_list' %}{% if article.source_application and not request.source_application %}?app={{ article.source_application.slug }}{% endif %}" class="text-sm text-blue-600 hover:underline">&larr; Back to Knowledge Base</a>
 </div>
 
 <article class="rounded-lg border border-gray-200 bg-white p-6">

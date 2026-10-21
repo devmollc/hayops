@@ -6,6 +6,8 @@ from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from apps.core.models import SourceApplication
+
 from .forms import ArticleForm
 from .models import Article, Category
 from .templatetags.kb_tags import render_markdown
@@ -18,7 +20,19 @@ def _visible_to(request, articles):
 
 
 def article_list(request):
-    articles = _visible_to(request, Article.objects.filter(is_published=True).select_related("category", "author"))
+    visible = _visible_to(request, Article.objects.filter(is_published=True))
+
+    # A portal is already scoped to its own app; the filter is for the admin
+    # domain, where every app's articles are mixed together. Global articles
+    # (no application) belong to every app, so they stay in any selection.
+    applications, selected_apps = [], []
+    if not request.source_application:
+        applications = SourceApplication.objects.filter(articles__in=visible).distinct().order_by("name")
+        selected_apps = request.GET.getlist("app")
+        if selected_apps:
+            visible = visible.filter(Q(source_application__slug__in=selected_apps) | Q(source_application__isnull=True))
+
+    articles = visible.select_related("category", "author")
 
     q = request.GET.get("q")
     if q:
@@ -30,13 +44,15 @@ def article_list(request):
     # The template reads category.articles.all directly, so the prefetch queryset
     # (not just `articles` above) must carry the same visibility filter.
     categories = Category.objects.prefetch_related(
-        Prefetch("articles", queryset=_visible_to(request, Article.objects.filter(is_published=True)))
+        Prefetch("articles", queryset=visible)
     ).all()
 
     context = {
         "articles": articles,
         "categories": categories,
         "search_query": q or "",
+        "applications": applications,
+        "selected_apps": selected_apps,
         "base_template": "portal/base.html" if request.source_application else "base.html",
     }
     return render(request, "kb/article_list.html", context)
